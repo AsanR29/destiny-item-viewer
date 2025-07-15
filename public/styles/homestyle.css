@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root{
+    --shadowarea-height: 0px;
+    --shadowarea-width: 0px;
+    --shadowarea-x: 0px;
+    --shadowarea-y: 0px;
+}
+
+body{
+    font-family: "Morrowind";
+}
+.hello {
+    color:red;
+}
+.one-line-header{
+    background-color: #FED7AA;/*#61533d;*/
+    background-image: url("/img/brown-gradient.jpg");
+    background-repeat: repeat-x;
+}
+.border-1{
+    border-width: 1px;
+}
+.border-b-1{
+    border-bottom-width: 1px;
+}
+
+@font-face {
+    font-family: "Morrowind";
+    src: url("fonts/MagicCardsNormal.ttf") format("truetype");
+}
+.brand-font{
+    font-family: "Morrowind";
+}
+
+.col-w-25{
+    width: 25%;
+}
+.col-w-75{
+    width: 75%;
+}
+.table-header-normalise{
+    font-weight: 400;   /** normal please **/
+    text-align:left;
+}
+
+.list-square{
+    list-style:square;
+    list-style-position: inside;
+}
+
+/* Used for logic. This element will be hidden anyway. */
+#shadowArea{
+    /*font-family: var(--font);
+    font-size: var(--user-fontsize);
+    line-height: var(--user-lineheight);*/
+
+    position: absolute;
+    height: auto;
+
+    width: var(--shadowarea-width);
+    left: var(--shadowarea-x);
+    top: var(--shadowarea-y);
+
+    z-index: -1;
+    background-color: transparent;
+    color:transparent;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+@layer components {
+    .btn {
+        @apply inline-block px-5 py-3 rounded-lg shadow-lg 
+        uppercase tracking-wider font-semibold text-sm
+        hover:-translate-y-1.5 transform transition
+        focus:outline-none focus:ring focus:ring-offset-2 
+        sm:text-base
+    }
+    .btn-indigo {
+        @apply bg-indigo-500 text-white hover:bg-indigo-600 focus:ring-indigo-500 focus:ring-opacity-50 focus:bg-indigo-800
+    }
+    .btn-gray {
+        @apply bg-gray-300 text-gray-800 hover:bg-gray-400 focus:ring-green-400 focus:ring-opacity-50 focus:bg-green-500 focus:text-gray-700
+    }
+    .link {
+        @apply hover:underline
+    }
+}

@@ -1,0 +1,37 @@
+extends destiny_layout
+
+block content
+    include ../../src/svg_mixins.pug
+    body(class="flex bg-slate-400" onload='repeatBG("bgHolder","loreEntry")')
+        div(class="w-1/2 flex justify-center relative")
+            div(id="bgHolder" class="absolute inset-0" style="z-index:0;")
+                +TriangleWallpaper(40,0,30,1000,false,"#222222","#666666")
+            div(class="relative" style="z-index:2;")
+                div.pl-10.pr-10
+                    div.bg-opacity-25.p-2(class="size-fit")
+                        if "loreDesc" in gun_data && gun_data["loreDesc"]
+                            h1.text-white.text-4xl.font-bold #{gun_data["loreDesc"]["displayProperties"]["name"]}
+                            label.text-white.text-2xl #{gun_data["loreDesc"]["subtitle"]}
+                            p(id="loreEntry" class="text-amber-500 text-base" style="white-space: pre; text-wrap: wrap;") #{gun_data["loreDesc"]["displayProperties"]["description"]}
+        div(class="w-1/2 bg-gray-400 flex items-center justify-center relative")
+            div(class="absolute inset-0" style="z-index:0;")
+                img(src="https://bungie.net"+ gun_data["screenshot"])
+                //- Grid Container
+                div(class=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6")
+                    each socket_key in Object.keys(socket_data)
+                        - socket = socket_data[socket_key];
+                        if socket != false
+                            +socketCard(socket)
+
+            //- div(class="relative" style="z-index:1;")
+                h1.text-white.text-4xl.font-bold Welcome to the Right Half
+
+
+
+mixin socketCard(socket)
+    //- var size_height = "h-32";
+    -   const sizeClasses = { height: "h-14", width: "w-14", };
+    div(class="items-center rounded-lg bg-slate-400 shadow-lg overflow-hidden" style="width:fit-content;")
+        img(class=sizeClasses.height + " " + sizeClasses.width + " flex-shrink-0 object-cover object-center", src="https://bungie.net"+socket.icon, alt="socket's icon here")
+        div(class="px-2 py-1")
+            h3(class="text-sm font-semibold text-gray-800") #{socket["name"]}

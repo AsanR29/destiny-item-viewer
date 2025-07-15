@@ -1,0 +1,286 @@
+-
+    //{x:,y:}
+    const pi_ratio = Math.PI/180;
+
+    const simple_triangle = [{x:-0.5,y:0.433},{x:0,y:-0.433},{x:0.5,y:0.433}]; //[{x:0,y:0.866},{x:0.5,y:0},{x:1,y:0.866}];
+    const simple_quadrilateral = [{x:-0.7,y:-0.79},{x:0,y:-0.2},{x:0.7,y:-0.2},{x:-0.5,y:0.6}];
+    const wall_paper_line = [{x:-0.2,y:-1},{x:-0.1,y:-0.8},{x:-0.1,y:0.8},{x:0.1,y:1},{x:0.2,y:1},{x:0.1,y:0.8},{x:0.1,y:-0.8},{x:-0.1,y:-1}];
+    const invert_wall_paper_line = [{x:0.2,y:-1},{x:0.1,y:-0.8},{x:0.1,y:0.8},{x:-0.1,y:1},{x:-0.2,y:1},{x:-0.1,y:0.8},{x:-0.1,y:-0.8},{x:0.1,y:-1}];
+    const diamond_like_corner = [{x:0.3,y:1},{x:0.6,y:0.8},{x:0.65,y:0.55},{x:0.8,y:0.4},{x:1,y:0.3},{x:1,y:1}];
+    //obligatory. not mine
+    function getBaseLog(x, y) {
+        return Math.log(y) / Math.log(x);
+    }
+    //
+    function DrawShape(coord_set,size,x_off,y_off,angle)
+    {
+        let real_angle = pi_ratio * angle;
+        let final_coords = [];
+        let new_x, new_y;
+        for(let i = 0; i < coord_set.length; i++)
+        {
+            old_x = coord_set[i].x * size;
+            old_y = coord_set[i].y * size;
+
+            //- Rotation matrix I suppose ?
+            new_x = old_x*Math.cos(real_angle) - old_y*Math.sin(real_angle) + x_off;
+            new_y = old_x*Math.sin(real_angle) + old_y*Math.cos(real_angle) + y_off;
+            final_coords.push({x: new_x,y: new_y});
+        }
+        let points_text = "";
+        for(let i = 0; i < final_coords.length; i++)
+        {
+            points_text += final_coords[i].x.toString() + ',' + final_coords[i].y.toString() + ' ';
+        }
+        return points_text;
+    }
+
+
+
+mixin NoisyCircle()
+    svg(viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg")
+        pattern(id="trianglePattern" viewBox="0 0 700 1100" width="0.2" height="0.33" stroke-width="0")
+            
+            g(fill="#0000aa")
+                polygon(points="0,0 300,500 600,0" stroke="#000099")
+                polygon(points="0,1100 300,600 600,1100" stroke="#000099")
+
+                polygon(points="350,550 650,1100 900,550" stroke="#000099")
+                polygon(points="0,1000 250,550 0,550" stroke="#000099")
+
+                polygon(points="350,500 650,0 900,500" stroke="#000099")
+                polygon(points="0,100 250,500 0,500" stroke="#000099")
+
+        circle(cx="10" cy="10" r="10" fill="#bbbbff")
+        circle(cx="10" cy="10" r="10" fill="url(#trianglePattern)")
+
+mixin MatteCircle(hex_code)
+    svg(viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg")
+        circle(cx="50" cy="50" r="50" fill=hex_code)
+
+mixin GenTriangle(dx,dy,hypotenuse,hex_code)
+    -
+        var opposite = (hypotenuse)*Math.sin(pi_ratio * 60);
+        x1 = dx - (hypotenuse/2); y1 = dy + (opposite/2);
+        x2 = dx; y2 = dy - (opposite/2);
+        x3 = dx + (hypotenuse/2); y3 = dy + (opposite/2);
+    polygon(points=`${x1},${y1} ${x2},${y2} ${x3},${y3}` stroke=hex_code)
+
+mixin RotatedTriangle(dx,dy,hypotenus,rotation,hex_code)
+    -
+        var new_angle = 60-angle;
+        var gradient = Math.atan(pi_ratio * new_angle);
+
+mixin DrawTriangle(size,x,y,angle,hex_code)
+    - var points_text = DrawShape(simple_triangle,size,x,y,angle);
+    svg(viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg")
+        polygon(points=points_text stroke=hex_code)
+
+mixin DrawQuadrilateral(size,x,y,angle,hex_code)
+    - var points_text = DrawShape(simple_quadrilateral,size,x,y,angle);
+    svg(viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg")
+        polygon(points=points_text stroke=hex_code)
+
+mixin TriangleWallpaper(size, sparse_amp, limit, width, height, fill_color, border_color)
+    -
+        var opposite = (size)*Math.sin(pi_ratio * 60);
+        if(limit == false){ limit = 100; }
+        if(width == false){ width=1000; }
+        if(height == false){
+            height = (opposite+sparse_amp*2)*limit;
+        }
+    svg(viewBox=`0 0 ${width} ${height}` xmlns="http://www.w3.org/2000/svg" stroke-width="0")
+        -
+            var angle = 0;
+
+            var redness = "";
+            var blueness = "";
+            var greenness = "";
+
+            var invert = 0;
+            var points_text = [];
+            var i = 0;
+            
+        while i < limit
+            -
+                var j = 0;
+                if(!fill_color) {
+                    redness = i.toString(16); if(redness.length == 1){ redness = '0' + redness; };
+                } else{ redness = "00"; }
+            while j < (limit*2)+1
+                -
+                    x = j*(size*0.5 + sparse_amp); y = (i+0.5)*(opposite + sparse_amp*2);
+                    if(invert == 1){ 
+                        angle = 180; invert = 0; 
+                        y -= (sparse_amp/3)
+                    } else{ 
+                        angle = 0; invert = 1; 
+                        y += (sparse_amp/2)
+                    }
+                    points_text = DrawShape(simple_triangle,size,x,y,angle);
+
+                    
+                    blueness = j.toString(16); if(blueness.length == 1){ blueness = '0'+blueness; };
+                    greenness = Math.floor((Math.random()*30)+20).toString(16);
+                    if(greenness.length == 1){ greenness = '0'+greenness; };
+                    hex_code = "#" + redness + greenness + blueness;
+                polygon(points=points_text fill=hex_code)
+                - ++j;
+            - ++i;
+
+mixin DiamondWallpaper(size, sparse_amp)
+    svg(viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" stroke-width="0")
+        -
+            var angle = 0;
+            var stage = 0;
+            var backstage = 0;
+            var diamond_stage = 0;
+
+            var points_text = [];
+            var i = 0;
+            var hex_code = "#8888dd";
+            var stroke_code = "#ccccdd";
+            
+        while i < 50
+            - var j = 0;
+            while j < 51
+                -
+                    x = j*(size*2 + sparse_amp); y = i*(size*2 + sparse_amp);
+                    // the one infront
+                    switch(stage){
+                        case 0:
+                            angle = 0; stage = 1;
+                            points_text = DrawShape(wall_paper_line,size,x,y,angle); break;
+                        case 1:
+                            angle = 90; stage = 2;
+                            points_text = DrawShape(invert_wall_paper_line,size,x,y,angle); break;
+                        case 2:
+                            angle = 180; stage = 3;
+                            points_text = DrawShape(wall_paper_line,size,x,y,angle); break;
+                        case 3:
+                            angle = 270; stage = 0;
+                            points_text = DrawShape(invert_wall_paper_line,size,x,y,angle); break;
+                    }
+                    //points_text = DrawShape(wall_paper_line,size,x,y,angle);
+                polygon(points=points_text fill=hex_code, stroke=stroke_code, stroke-width="1")
+                -
+                    //the one behind
+                    switch(backstage){
+                        case 0:
+                            angle = 90; backstage = 1;
+                            points_text = DrawShape(wall_paper_line,size,x,y,angle); break;
+                        case 1:
+                            angle = 180; backstage = 2;
+                            points_text = DrawShape(invert_wall_paper_line,size,x,y,angle); break;
+                        case 2:
+                            angle = 270; backstage = 3;
+                            points_text = DrawShape(wall_paper_line,size,x,y,angle); break;
+                        case 3:
+                            angle = 0; backstage = 0;
+                            points_text = DrawShape(invert_wall_paper_line,size,x,y,angle); break;
+                    }
+
+                polygon(points=points_text fill=hex_code, stroke=stroke_code, stroke-width="1")
+                - ++j;
+            - ++i;
+
+mixin DiamondPattern(size, sparse_amp)
+    svg(viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" stroke-width="0")
+        pattern(id="diamondPattern" viewBox=`0 0 ${size*4} ${size*4}` width="0.2" height="0.2" stroke-width="0")
+            g(fill="#0000aa")
+                -
+                    var angle = 0;
+                    var stage = 0;
+                    var backstage = 0;
+                    var diamond_stage = 0;
+
+                    var points_text = [];
+                    var i = 0;
+                    var k = 0;
+                    var hex_code = "#8888dd";
+                    var stroke_code = "#ccccdd";
+                    var diamond_code = "#9999dd";
+                    
+                while i < 4
+                    - var j = 0;
+                    while j < 5
+                        -
+                            x = j*(size*2); y = i*(size*2);
+                            // the one infront
+                            switch(stage){
+                                case 0:
+                                    angle = 0; stage = 1;
+                                    points_text = DrawShape(wall_paper_line,size,x,y,angle); break;
+                                case 1:
+                                    angle = 90; stage = 2;
+                                    points_text = DrawShape(invert_wall_paper_line,size,x,y,angle); break;
+                                case 2:
+                                    angle = 180; stage = 3;
+                                    points_text = DrawShape(wall_paper_line,size,x,y,angle); break;
+                                case 3:
+                                    angle = 270; stage = 0;
+                                    points_text = DrawShape(invert_wall_paper_line,size,x,y,angle); break;
+                            }
+                            //points_text = DrawShape(wall_paper_line,size,x,y,angle);
+
+                        polygon(points=points_text fill=hex_code, stroke=stroke_code, stroke-width="1")
+                        -
+                            //the one behind
+                            switch(backstage){
+                                case 0:
+                                    angle = 90; backstage = 1;
+                                    points_text = DrawShape(wall_paper_line,size,x,y,angle); break;
+                                case 1:
+                                    angle = 180; backstage = 2;
+                                    points_text = DrawShape(invert_wall_paper_line,size,x,y,angle); break;
+                                case 2:
+                                    angle = 270; backstage = 3;
+                                    points_text = DrawShape(wall_paper_line,size,x,y,angle); break;
+                                case 3:
+                                    angle = 0; backstage = 0;
+                                    points_text = DrawShape(invert_wall_paper_line,size,x,y,angle); break;
+                            }
+
+                        polygon(points=points_text fill=hex_code, stroke=stroke_code, stroke-width="1")
+                        - ++j;
+                    - ++i;
+                - stage = 0; i = 0;
+                while i < 3
+                    - j = 0;
+                    while j < 3
+                        - k = 0;
+                        while k < 4
+                            -
+                                angle = k*90;
+                                points_text = DrawShape(diamond_like_corner,size,i*size*2,j*size*2,angle);
+                                //console.log(diamond_code);
+                            - ++k;
+                            polygon(points=points_text fill=diamond_code, stroke=stroke_code, stroke-width="1")
+                        - ++j;
+                    - ++i;
+        rect(width="1000" height="1000" fill="url(#diamondPattern)")
+
+
+mixin ProgressBar(progress, limit)
+    -
+        let max = 1;
+        if(limit == false){
+            order = Math.floor(getBaseLog(10, progress)+1);
+            max = Math.pow(10,order);
+        }
+        else{ max = limit; }
+        scaler = 1000/max;
+    svg(viewBox="0 0 1000 50" xmlns="http://www.w3.org/2000/svg" stroke-width="0")
+        style.
+            .progress_count{
+                fill: white;
+                font-size: 25px;
+                font-family: Trebuchet MS;
+            }
+        rect(
+            x=0 width=(progress*scaler) height=50 fill="#00BB00")
+        rect(
+            x=(progress*scaler) width=((max*1000)-(progress*scaler)) height=50 fill="#aaaaaa")
+
+        text(x="10" y="35" class="progress_count") #{progress}
+

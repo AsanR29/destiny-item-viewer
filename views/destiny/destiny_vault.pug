@@ -1,0 +1,64 @@
+extends ./destiny_layout
+
+block content
+    include ../../src/destiny_header.pug
+    include ../../src/svg_mixins.pug
+    body(class="bg-blue-900 h-full w-full")
+        div(class="h-full w-full" style="position:absolute; overflow: visible; z-index:-1;")
+            div(id="bg0" class="bg-blue-900 h-full w-full" style="position:absolute; z-index:0;")
+            div(id="bg1" class="bg-blue-900 h-full w-full" style="position:absolute; z-index:1;")
+                svg(hidden viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg")
+                    pattern(id="trianglePattern" viewBox="0 0 700 1100" width="0.02" height="0.033" stroke-width="0")
+                        
+                        g(fill="#1e3a8a" stroke="") <!--(fill="#0000aa" stroke="#000099") -->
+                            polygon(points="0,0 300,500 600,0")
+                            polygon(points="0,1100 300,600 600,1100")
+
+                            polygon(points="350,550 650,1100 900,550")
+                            polygon(points="0,1000 250,550 0,550")
+
+                            polygon(points="350,500 650,0 900,500")
+                            polygon(points="0,100 250,500 0,500")
+
+                    circle(cx="100" cy="100" r="99.8" fill="#9999dd")
+                    circle(cx="100" cy="100" r="100" fill="url(#trianglePattern)")
+            div(id="bg2" class="bg-transparent max-w-7xl mx-24 px-2 py-4 sm:px-4 lg:px-6" style="position:absolute; z-index:2;")
+                div(class="bg-blue-910 h-40 w-80")
+        div(id="bg3" class="h-full w-full" style="z-index:0;")
+            +drop_header(title)
+            
+            div(class="bg-transparent pl-64 pr-64 pt-20")
+                div(style="height:100px; width:100%; z-index:1;")
+                    center
+                        //- SVG was here
+                div(style="z-index:2;")
+                    p(class="text-yellow-300") 
+                    div(class="bg-blue-500 block border-solid border-2 border-spacing-2 border-blue-700")
+                        p(class="ml-8 text-white") 
+                    
+                    section(class="max-w-7xl mx-auto p-4")
+                        h2(class="text-2xl font-semibold mb-4") Items:
+
+                        //- grid of guns
+                        div(class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-9 gap-6")
+                            each vault_key in Object.keys(vault_data)
+                                - vault_gun = vault_data[vault_key];
+                                if vault_gun != false && (filter == false || vault_gun.itemType == filter)
+                                    +gunCard(vault_gun)
+
+                    section(class="max-w-7xl mx-auto w-full p-4" style="height:fit-content;")
+
+mixin gunCard(gun)
+    //- var size_height = "h-32";
+    -   const sizeClasses = { height: "h-14", width: "w-14", };
+    div(class="flex items-center border-blue-700 border-2 bg-white shadow-lg overflow-hidden" style="width:fit-content;")
+        img(class=sizeClasses.height + " " + sizeClasses.width + " flex-shrink-0 object-cover object-center", src="https://bungie.net"+gun.icon, alt="gun's icon here")
+        div(class="px-2 py-1" hidden)
+            h3(class="text-sm font-semibold text-gray-800") #{gun.name}
+            //- p(class="text-gray-600") #{gun.description}
+            div(class="mt-1")
+                a(href="#", class="text-indigo-600 hover:text-indigo-500 font-semibold text-sm") #{gun.itemTypeDesc}
+                label(class="ml-5 text-indigo-600 font-semibold text-sim") #{gun.itemType}
+
+
+

@@ -1,0 +1,12 @@
+
+mixin drop_header(title)
+    //- top left
+    header(class="max-w-7xl mx-28 px-4 py-6 sm:px-6 lg:px-8")
+        h1(class="text-3xl font-bold") #{title}
+    //- this is a white line
+    nav(class="bg-gray-50 border-b")
+    div(class="max-w-7xl mx-28 px-4 sm:px-6 lg:px-8 flex space-x-4 py-2")
+        a(href="./", class="text-black hover:text-blue-600") Home
+        a(href="login", class="text-black hover:text-blue-600") Login
+        a(href="contact", class="text-black hover:text-blue-600") Contact
+        a(href="random", class="text-black hover:text-blue-600") RANDOM
