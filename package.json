@@ -14,11 +14,13 @@
     "express-session": "^1.18.1",
     "flash-messages": "^0.0.4",
     "mongoose": "^8.8.2",
-    "postcss": "^8.4.49",
     "pug": "^3.0.3",
     "socket.io": "^4.8.1",
     "tailwindcss": "^3.4.15",
     "typescript": "^5.8.3",
     "vite": "^5.4.11"
+  },
+  "devDependencies": {
+    "postcss": "^8.5.6"
   }
 }
