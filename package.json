@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "node --env-file=.env ./bin/www",
-    "build": "postcss ./public/styles/homestyle.css -o ./public/build/homestyle.css"
+    "buildpost": "postcss ./public/styles/homestyle.css -o ./public/build/homestyle.css"
   },
   "engines": {
     "node": "^v20.13.1"
