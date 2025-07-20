@@ -1,10 +1,10 @@
 {
   "scripts": {
     "start": "node --env-file=.env ./bin/www",
-    "buildcss": "npx tailwindcss-cli build -i ./public/styles/homestyle.css -o ./public/build/homestyle.css",
-    "buildpost": "postcss ./public/styles/homestyle.css -o ./public/build/homestyle.css",
-    "dev": "vite",
-    "build": "vite build"
+    "build": "postcss ./public/styles/homestyle.css -o ./public/build/homestyle.css"
+  },
+  "engines": {
+    "node": "^v20.13.1"
   },
   "dependencies": {
     "autoprefixer": "^10.4.20",
