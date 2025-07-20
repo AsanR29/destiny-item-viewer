@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "node --env-file=.env ./bin/www",
+    "start": "node ./bin/www",
     "buildpost": "postcss ./public/styles/homestyle.css -o ./public/build/homestyle.css"
   },
   "engines": {
