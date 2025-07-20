@@ -22,7 +22,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use(session({
-    secret: process.env.SESSION_SECRET
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true
 }));
 app.use(flash());
 
@@ -48,8 +50,8 @@ text_command.read.execute = destiny_commands.destiny_read;
 text_command.save.execute = destiny_commands.destiny_save;
 setTimeout(loop_ask, 5000);
 
-const server = app.listen(3002, () => {
-    console.log(`The application started on port ${server.address().port}`);
-});
+//const server = app.listen(3000, () => {
+//    console.log(`The application started on port ${server.address().port}`);
+//});
 
 module.exports = app;
