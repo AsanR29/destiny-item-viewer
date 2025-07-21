@@ -28,12 +28,14 @@ const sockettype_definitions = {};
 const perk_definitions = {};
 const plugset_definitions = {};
 
+// MANIFEST ZONE
+//destiny_commands.destiny_manifest("","");
 // load saved weapon data
 try{ loadFromFile("weapon_directory", weapon_directory); }
 catch { console.log("Error while loading weapon_directory."); }
 // load saved lore data
 try { loadFromFile("lore_directory", lore_directory); }
-catch { console.log("Error while loading lore_directory."); }
+catch { console.log("Error while loading lore_directory."); destiny_commands.destiny_manifest("lore",""); }
 // load saved socket data
 try { loadFromFile("socket_directory", socket_directory); }
 catch { console.log("Error while loading socket_directory."); }
@@ -45,16 +47,16 @@ try { loadFromFile("weapon_to_socket", weapon_to_socket); }
 catch { console.log("Error while loading weapon_to_socket."); }
 // ALL item definitions...?
 try { loadFromFile("DestinyInventoryItemDefinition", item_definitions); }
-catch { console.log("Error while loading DestinyInventoryItemDefinition."); }
+catch { console.log("Error while loading DestinyInventoryItemDefinition."); destiny_commands.destiny_manifest("weapon","definitions"); }
 // ALL socket type definitions
 try { loadFromFile("DestinySocketTypeDefinition", sockettype_definitions); }
-catch{ console.log("Error while loading DestinySocketTypeDefinition."); }
+catch{ console.log("Error while loading DestinySocketTypeDefinition."); destiny_commands.destiny_manifest("sockettype",""); }
 // ALL perk definitions...?
 try { loadFromFile("DestinySandboxPerkDefinition", perk_definitions); }
-catch { console.log("Error while loading DestinySandboxPerkDefinition."); }
+catch { console.log("Error while loading DestinySandboxPerkDefinition."); destiny_commands.destiny_manifest("socket","definitions"); }
 // ALL plugset (randomised perk collection) definitions
 try { loadFromFile("DestinyPlugSetDefinition", plugset_definitions); }
-catch { console.log("Error while loading DestinyPlugSetDefinition."); }
+catch { console.log("Error while loading DestinyPlugSetDefinition."); destiny_commands.destiny_manifest("plugset",""); }
 
 console.log(DISCORD_TOKEN, CLIENT_ID, CLIENT_SECRET, API_KEY);
 //routes
@@ -830,13 +832,9 @@ async function saveSockettypeDefinitions(session_id, api_key, data) {
     await genericSaveDefinitions(session_id, api_key, data, sockettype_definitions);
 }
 
-await destiny_commands.destiny_manifest("","");
-await destiny_commands.destiny_manifest("lore","");
-await destiny_commands.destiny_manifest("sockettype","");
-await destiny_commands.destiny_manifest("plugset","");
-await destiny_commands.destiny_manifest("socket","definitions");
-await destiny_commands.destiny_manifest("weapon","definitions");
-
-await destiny_commands.destiny_save("all","");
+async function save_data_command(){
+    destiny_commands.destiny_save("all","");
+}
+setTimeout(save_data_command,600000);   //10 minutes
 
 module.exports = {router, destiny_commands};
