@@ -31,44 +31,46 @@ const plugset_definitions = {};
 // MANIFEST ZONE
 //destiny_commands.destiny_manifest("","");
 // load saved weapon data
-let load_result = false;
-try{ loadFromFile("weapon_directory", weapon_directory); }
-catch { console.log("Error while loading weapon_directory."); }
-// load saved lore data
-load_result = false;
-try { load_result = loadFromFile("lore_directory", lore_directory); }
-catch { console.log("Error while loading lore_directory."); }
-if(load_result == false){ destiny_commands.destiny_manifest("lore",""); }
-// load saved socket data
-try { loadFromFile("socket_directory", socket_directory); }
-catch { console.log("Error while loading socket_directory."); }
-// etc
-try { loadFromFile("socket_to_weapon", socket_to_weapon); }
-catch { console.log("Error while loading socket_to_weapon."); }
-// etc
-try { loadFromFile("weapon_to_socket", weapon_to_socket); }
-catch { console.log("Error while loading weapon_to_socket."); }
-// ALL item definitions...?
-load_result = false;
-try { load_result = loadFromFile("DestinyInventoryItemDefinition", item_definitions); }
-catch { console.log("Error while loading DestinyInventoryItemDefinition."); }
-if(load_result == false){ destiny_commands.destiny_manifest("weapon","definitions"); }
-// ALL socket type definitions
-load_result = false;
-try { load_result = loadFromFile("DestinySocketTypeDefinition", sockettype_definitions); }
-catch{ console.log("Error while loading DestinySocketTypeDefinition."); }
-if(load_result == false){ destiny_commands.destiny_manifest("sockettype",""); }
-// ALL perk definitions...?
-load_result = false;
-try { load_result = loadFromFile("DestinySandboxPerkDefinition", perk_definitions); }
-catch { console.log("Error while loading DestinySandboxPerkDefinition."); }
-if(load_result == false){ destiny_commands.destiny_manifest("socket","definitions"); }
-// ALL plugset (randomised perk collection) definitions
-load_result = false;
-try { load_result = loadFromFile("DestinyPlugSetDefinition", plugset_definitions); }
-catch { console.log("Error while loading DestinyPlugSetDefinition."); }
-if(load_result == false){ destiny_commands.destiny_manifest("plugset",""); }
-
+async function loadAllFiles(){
+    let load_result = false;
+    try{ loadFromFile("weapon_directory", weapon_directory); }
+    catch { console.log("Error while loading weapon_directory."); }
+    // load saved lore data
+    load_result = false;
+    try { load_result = await loadFromFile("lore_directory", lore_directory); }
+    catch { console.log("Error while loading lore_directory."); }
+    if(load_result == false){ destiny_commands.destiny_manifest("lore",""); }
+    // load saved socket data
+    try { loadFromFile("socket_directory", socket_directory); }
+    catch { console.log("Error while loading socket_directory."); }
+    // etc
+    try { loadFromFile("socket_to_weapon", socket_to_weapon); }
+    catch { console.log("Error while loading socket_to_weapon."); }
+    // etc
+    try { loadFromFile("weapon_to_socket", weapon_to_socket); }
+    catch { console.log("Error while loading weapon_to_socket."); }
+    // ALL item definitions...?
+    load_result = false;
+    try { load_result = await loadFromFile("DestinyInventoryItemDefinition", item_definitions); }
+    catch { console.log("Error while loading DestinyInventoryItemDefinition."); }
+    if(load_result == false){ destiny_commands.destiny_manifest("weapon","definitions"); }
+    // ALL socket type definitions
+    load_result = false;
+    try { load_result = await loadFromFile("DestinySocketTypeDefinition", sockettype_definitions); }
+    catch{ console.log("Error while loading DestinySocketTypeDefinition."); }
+    if(load_result == false){ destiny_commands.destiny_manifest("sockettype",""); }
+    // ALL perk definitions...?
+    load_result = false;
+    try { load_result = await loadFromFile("DestinySandboxPerkDefinition", perk_definitions); }
+    catch { console.log("Error while loading DestinySandboxPerkDefinition."); }
+    if(load_result == false){ destiny_commands.destiny_manifest("socket","definitions"); }
+    // ALL plugset (randomised perk collection) definitions
+    load_result = false;
+    try { load_result = await loadFromFile("DestinyPlugSetDefinition", plugset_definitions); }
+    catch { console.log("Error while loading DestinyPlugSetDefinition."); }
+    if(load_result == false){ destiny_commands.destiny_manifest("plugset",""); }
+}
+loadAllFiles();
 console.log(DISCORD_TOKEN, CLIENT_ID, CLIENT_SECRET, API_KEY);
 //routes
 
@@ -851,6 +853,6 @@ async function save_data_command(){
     await destiny_commands.destiny_save("all","");
     console.log("saved all (command)");
 }
-setTimeout(save_data_command,300000);   //5 minutes
+setTimeout(save_data_command,600000);   //10 minutes
 
 module.exports = {router, destiny_commands};
