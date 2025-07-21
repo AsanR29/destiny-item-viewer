@@ -788,6 +788,7 @@ class destiny_commands {
                     //writeToFile("DestinySandboxPerkDefinition", socket_definitions);
                     break;
                 case "all":
+                    console.log("inside of save all switchcase");
                     writeToFile("lore_directory", lore_directory);
                     writeToFile("DestinySandboxPerkDefinition", perk_definitions);
                     writeToFile("DestinyInventoryItemDefinition", item_definitions); 
@@ -797,6 +798,7 @@ class destiny_commands {
                     writeToFile("weapon_directory", weapon_directory);
                     writeToFile("socket_to_weapon", socket_to_weapon);
                     writeToFile("weapon_to_socket", weapon_to_socket);
+                    console.log("hopefully all those files were written");
             }
         }
         catch(err){ console.log(err); }
@@ -821,9 +823,11 @@ async function genericSaveDefinitions(session_id, api_key, data, the_dict) {
 }
 async function saveSandboxDefinitions(session_id, api_key, data) {
     await genericSaveDefinitions(session_id, api_key, data, perk_definitions);
+    console.log("saved perk definitions");
 }
 async function saveLoreDefinitions(session_id, api_key, data) {
     await genericSaveDefinitions(session_id, api_key, data, lore_directory);
+    console.log("saved lore definitions");
 }
 async function savePlugsetDefinitions(session_id, api_key, data) {
     await genericSaveDefinitions(session_id, api_key, data, plugset_definitions);
@@ -833,7 +837,8 @@ async function saveSockettypeDefinitions(session_id, api_key, data) {
 }
 
 async function save_data_command(){
-    destiny_commands.destiny_save("all","");
+    await destiny_commands.destiny_save("all","");
+    console.log("saved all (command)");
 }
 setTimeout(save_data_command,300000);   //5 minutes
 
