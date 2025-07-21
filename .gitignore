@@ -1,4 +1,4 @@
-/dist/build
+/dist/build/homestyle.css
 .env
 /node_modules
 /public/build

@@ -261,19 +261,7 @@ async function writeToFile(file_name, data) {
     }
     });
 };
-async function getLoreManifest(session_id=-1, api_key, data) {
-    lore_keys = Object.keys(data);
-    for(let i = 0; i < lore_keys.length; i++)
-    {
-        let entry = data[lore_keys[i]];
-        let string_key = lore_keys[i].toString();
-        if(!(string_key in lore_directory))
-        {
-            lore_directory[string_key] = entry;
-        }
-    }
-    console.log("lore manifest end");
-};
+
 async function saveWeaponDefinitions(session_id, api_key, data) {
     console.log("Save Weapon Definitions.");
     let def_keys = Object.keys(data);
@@ -680,7 +668,7 @@ class destiny_commands {
                             console.log("in definitions");
                             let r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinySandboxPerkDefinition-c72a34d3-f297-4f5f-8da6-8767b662554d.json";
                             await create(-1,r_url,API_KEY, {},
-                                saveSocketDefinitions, "GET"
+                                saveSandboxDefinitions, "GET"
                             );
                             break;
                     }
@@ -691,7 +679,25 @@ class destiny_commands {
                     await create(-1,r_url,API_KEY, {
                         //"components":"300"
                     },
-                        getLoreManifest, "GET"
+                        saveLoreDefinitions, "GET"
+                    );
+                    break;
+                case "plugset":
+                    console.log("Manifest plugset?");
+                    r_url = "https://www.bungie.net/" + "/common/destiny2_content/json/en/DestinyPlugSetDefinition-c72a34d3-f297-4f5f-8da6-8767b662554d.json";
+                    await create(-1,r_url,API_KEY, {
+                        //"components":"300"
+                    },
+                        savePlugsetDefinitions, "GET"
+                    );
+                    break;
+                case "sockettype":
+                    console.log("Manifest socket types?");
+                    r_url = "https://www.bungie.net/" + "/common/destiny2_content/json/en/DestinySocketTypeDefinition-c72a34d3-f297-4f5f-8da6-8767b662554d.json";
+                    await create(-1,r_url,API_KEY, {
+                        //"components":"300"
+                    },
+                        saveSockettypeDefinitions, "GET"
                     );
                     break;
                 default:
@@ -779,11 +785,58 @@ class destiny_commands {
                     writeToFile("weapon_to_socket", weapon_to_socket);
                     //writeToFile("DestinySandboxPerkDefinition", socket_definitions);
                     break;
+                case "all":
+                    writeToFile("lore_directory", lore_directory);
+                    writeToFile("DestinySandboxPerkDefinition", perk_definitions);
+                    writeToFile("DestinyInventoryItemDefinition", item_definitions); 
+                    writeToFile("DestinySocketTypeDefinition", sockettype_definitions); 
+                    writeToFile("DestinyPlugSetDefinition", plugset_definitions);
+
+                    writeToFile("weapon_directory", weapon_directory);
+                    writeToFile("socket_to_weapon", socket_to_weapon);
+                    writeToFile("weapon_to_socket", weapon_to_socket);
             }
         }
         catch(err){ console.log(err); }
         return;
     };
 };
+
+// temporary. until i make an endpoint for myself to send commands
+async function genericSaveDefinitions(session_id, api_key, data, the_dict) {
+    let def_keys = Object.keys(data);
+    let entry, string_key;
+    for(let i =0; i < def_keys.length; i++)
+    {
+        entry = data[def_keys[i]];
+        string_key = def_keys[i].toString();
+        if(!(string_key in the_dict))
+        {
+            the_dict[string_key] = entry;
+        }
+    }
+    return;
+}
+async function saveSandboxDefinitions(session_id, api_key, data) {
+    await genericSaveDefinitions(session_id, api_key, data, perk_definitions);
+}
+async function saveLoreDefinitions(session_id, api_key, data) {
+    await genericSaveDefinitions(session_id, api_key, data, lore_directory);
+}
+async function savePlugsetDefinitions(session_id, api_key, data) {
+    await genericSaveDefinitions(session_id, api_key, data, plugset_definitions);
+}
+async function saveSockettypeDefinitions(session_id, api_key, data) {
+    await genericSaveDefinitions(session_id, api_key, data, sockettype_definitions);
+}
+
+await destiny_commands.destiny_manifest("","");
+await destiny_commands.destiny_manifest("lore","");
+await destiny_commands.destiny_manifest("sockettype","");
+await destiny_commands.destiny_manifest("plugset","");
+await destiny_commands.destiny_manifest("socket","definitions");
+await destiny_commands.destiny_manifest("weapon","definitions");
+
+await destiny_commands.destiny_save("all","");
 
 module.exports = {router, destiny_commands};
