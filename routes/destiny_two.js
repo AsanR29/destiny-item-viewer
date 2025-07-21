@@ -269,6 +269,10 @@ async function shelfSocket(target_dict, hash, socket) {
 async function writeToFile(file_name, data) {
     fs.writeFile("static_data/"+file_name+".json", JSON.stringify(data), { flag: 'w+' }, err => {
     if (err) {
+        if (!fs.existsSync("static_data")) {
+            var fs = require("fs");
+            fs.mkdir("static_data", () => { writeToFile(file_name,data); });
+        }
         console.error(err);
     } else {
         // file written successfully
