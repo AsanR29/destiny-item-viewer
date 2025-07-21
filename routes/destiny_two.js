@@ -70,15 +70,14 @@ async function loadAllFiles(){
     catch { console.log("Error while loading DestinyPlugSetDefinition."); }
     if(load_result == false){ destiny_commands.destiny_manifest("plugset",""); }
 }
-/*
+
 let folder_path = path.resolve(__dirname, "../static_data");
 console.log(folder_path);
 if (!fs.existsSync(folder_path)) {
     fs.mkdirSync("static_data");
     console.log("DOES IT EXIST: ", fs.existsSync(folder_path));
-    return;
 }
-path.resolve(__dirname, "../routes");*/
+path.resolve(__dirname, "../routes");
 loadAllFiles();
 console.log(DISCORD_TOKEN, CLIENT_ID, CLIENT_SECRET, API_KEY);
 //routes
