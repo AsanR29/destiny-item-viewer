@@ -72,6 +72,7 @@ async function loadAllFiles(){
 }
 
 let folder_path = path.join(__dirname, "static_data");
+console.log(folder_path);
 if (!fs.existsSync(folder_path)) {
     fs.mkdirSync("static_data");
     console.log("DOES IT EXIST: ", fs.existsSync(folder_path));
