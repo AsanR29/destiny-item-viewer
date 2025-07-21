@@ -324,7 +324,7 @@ async function saveSocketDefinitions(session_id, api_key, data) {
 };
 
 function parseGunData(item_data) {
-    if(!("hash" in item_data)){ return; } // can't be saved ATM without a hash
+    if(!(item_data) || !("hash" in item_data)){ return; } // can't be saved ATM without a hash
     itemHash = item_data["hash"];
     itemName = false;
     itemIcon = false;
@@ -835,6 +835,6 @@ async function saveSockettypeDefinitions(session_id, api_key, data) {
 async function save_data_command(){
     destiny_commands.destiny_save("all","");
 }
-setTimeout(save_data_command,600000);   //10 minutes
+setTimeout(save_data_command,300000);   //5 minutes
 
 module.exports = {router, destiny_commands};
