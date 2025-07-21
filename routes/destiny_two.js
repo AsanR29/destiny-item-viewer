@@ -5,7 +5,7 @@ var router = express.Router();
 var http = require('http');
 const { URLSearchParams } = require('url');
 const fs = require('node:fs');
-const { parse } = require('node:path');
+const path = require('node:path');
 
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
@@ -69,6 +69,13 @@ async function loadAllFiles(){
     try { load_result = await loadFromFile("DestinyPlugSetDefinition", plugset_definitions); }
     catch { console.log("Error while loading DestinyPlugSetDefinition."); }
     if(load_result == false){ destiny_commands.destiny_manifest("plugset",""); }
+}
+
+let folder_path = path.join(__dirname, "static_data");
+if (!fs.existsSync(folder_path)) {
+    fs.mkdirSync("static_data");
+    console.log("DOES IT EXIST: ", fs.existsSync(folder_path));
+    return;
 }
 loadAllFiles();
 console.log(DISCORD_TOKEN, CLIENT_ID, CLIENT_SECRET, API_KEY);
@@ -269,10 +276,6 @@ async function shelfSocket(target_dict, hash, socket) {
 async function writeToFile(file_name, data) {
     fs.writeFile("static_data/"+file_name+".json", JSON.stringify(data), { flag: 'w+' }, err => {
     if (err) {
-        if (!fs.existsSync("static_data")) {
-            var fs = require("fs");
-            fs.mkdir("static_data", () => { writeToFile(file_name,data); });
-        }
         console.error(err);
     } else {
         // file written successfully
