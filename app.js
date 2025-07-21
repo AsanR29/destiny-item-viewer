@@ -13,7 +13,7 @@ var destiny_commands = destiny_req.destiny_commands;
 //idk why it won't let me use the {router, destiny_commands} syntax. mysterious error.
 
 const app = express();
-
+console.log("in app. path: ", __dirname);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 

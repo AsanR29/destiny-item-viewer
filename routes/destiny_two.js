@@ -78,6 +78,7 @@ if (!fs.existsSync(folder_path)) {
     console.log("DOES IT EXIST: ", fs.existsSync(folder_path));
     return;
 }
+path.resolve(__dirname, "../routes");
 loadAllFiles();
 console.log(DISCORD_TOKEN, CLIENT_ID, CLIENT_SECRET, API_KEY);
 //routes
