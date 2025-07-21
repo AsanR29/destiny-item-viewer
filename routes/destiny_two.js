@@ -71,7 +71,7 @@ async function loadAllFiles(){
     if(load_result == false){ destiny_commands.destiny_manifest("plugset",""); }
 }
 
-let folder_path = path.join(__dirname, "static_data");
+let folder_path = path.resolve(__dirname, "../static_data");
 console.log(folder_path);
 if (!fs.existsSync(folder_path)) {
     fs.mkdirSync("static_data");
