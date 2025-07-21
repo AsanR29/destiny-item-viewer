@@ -8,7 +8,9 @@ var flash = require('express-flash');
 const {Zebra, text_command} = require('./scripts/cmd_multitool');
 var homeRouter = require('./routes/home');
 const destiny_req = require('./routes/destiny_two');
+console.log("destiny_req: ",destiny_req);
 var destinyRouter = destiny_req.router;
+console.log("destinyRouter: ", destinyRouter);
 var destiny_commands = destiny_req.destiny_commands;
 //idk why it won't let me use the {router, destiny_commands} syntax. mysterious error.
 

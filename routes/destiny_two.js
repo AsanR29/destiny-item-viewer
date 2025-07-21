@@ -864,4 +864,5 @@ async function save_data_command(){
 }
 setTimeout(save_data_command,600000);   //10 minutes
 
-module.exports = {router, destiny_commands};
+console.log(router);
+module.exports = {"router":router, "destiny_commands":destiny_commands};
