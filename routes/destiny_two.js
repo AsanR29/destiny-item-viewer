@@ -67,11 +67,11 @@ async function loadAllFiles(){
     try { load_result = await loadFromFile("DestinyPlugSetDefinition", plugset_definitions); }
     catch { console.log("Error while loading DestinyPlugSetDefinition."); }
     if(process.env.DOWNLOAD == 1) {
-        destiny_commands.destiny_manifest("lore","");
-        destiny_commands.destiny_manifest("weapon","definitions");
-        destiny_commands.destiny_manifest("sockettype","");
-        destiny_commands.destiny_manifest("socket","definitions");
-        destiny_commands.destiny_manifest("plugset","");
+        destiny_commands.destiny_manifest("lore",[""]);
+        destiny_commands.destiny_manifest("weapon",["definitions"]);
+        destiny_commands.destiny_manifest("sockettype",[""]);
+        destiny_commands.destiny_manifest("socket",["definitions"]);
+        destiny_commands.destiny_manifest("plugset",[""]);
     }
 }
 
@@ -581,7 +581,7 @@ async function create(session_id, url, api_key, body_params, next_function, meth
 
         // Check the response status
         if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        throw new Error(`HTTP error! Status: ${response.status}. url: ${r_url}`);
         }
 
         // Parse the JSON response
@@ -656,11 +656,10 @@ class destiny_commands {
             switch (type)
             {
                 case "weapon":
-                    let r_url;
                     console.log("id ", id, " equals:", (id == "all"));
                     switch(id[0]) {
                         case "all":
-                            console.log("in all");
+                            console.log("in weapon all");
                             let weapon_keys = Object.keys(weapon_directory);
                             for(let i in weapon_keys){
                                 let key = weapon_keys[i];
@@ -699,7 +698,7 @@ class destiny_commands {
                             break;
                         case "definitions":
                             console.log("in definitions");
-                            let r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinySandboxPerkDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
+                            r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinySandboxPerkDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
                             await create(-1,r_url,API_KEY, {},
                                 saveSandboxDefinitions, "GET"
                             );
@@ -818,7 +817,7 @@ class destiny_commands {
                     writeToFile("weapon_to_socket", weapon_to_socket);
                     //writeToFile("DestinySandboxPerkDefinition", socket_definitions);
                     break;
-                case "all":
+                case "everything":
                     console.log("inside of save all switchcase");
                     writeToFile("lore_directory", lore_directory);
                     writeToFile("DestinySandboxPerkDefinition", perk_definitions);
@@ -869,10 +868,10 @@ async function saveSockettypeDefinitions(session_id, api_key, data) {
 }
 
 async function save_data_command(){
-    await destiny_commands.destiny_save("all","");
+    await destiny_commands.destiny_save("everything","");
     console.log("saved all (command)");
 }
 setTimeout(save_data_command,600000);   //10 minutes
 
-console.log(router);
+//console.log(router);
 module.exports = {"router":router, "destiny_commands":destiny_commands};

@@ -13,7 +13,7 @@ class text_command {
     //static lore = new text_command("lore");
     static manifest = new text_command("manifest", ["weapon","lore","socket","plugset","sockettype"]);
     static read = new text_command("read", ["weapon","socket"]);
-    static save = new text_command("save", ["weapon","character","lore","socket","all"]);
+    static save = new text_command("save", ["weapon","character","lore","socket","everything"]);
 
     constructor(word, params) {
         this.word = word;
@@ -21,7 +21,7 @@ class text_command {
         this.execute = null;
     }
 }
-const word_lookup = ["show", "weapon", "character", "lore", "socket", "manifest", "save", "read","plugset","sockettype","all"];
+const word_lookup = ["show", "weapon", "character", "lore", "socket", "manifest", "save", "read", "plugset", "sockettype", "everything"];
 
 
 function sad () { console.log(":("); };
