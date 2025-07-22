@@ -28,6 +28,8 @@ const sockettype_definitions = {};
 const perk_definitions = {};
 const plugset_definitions = {};
 
+const render_filepath = "/mnt/data/";
+
 // MANIFEST ZONE
 //destiny_commands.destiny_manifest("","");
 // load saved weapon data
@@ -71,13 +73,13 @@ async function loadAllFiles(){
     if(load_result == false){ destiny_commands.destiny_manifest("plugset",""); }
 }
 
-let folder_path = path.resolve(__dirname, "../static_data");
-console.log(folder_path);
+let folder_path = path.resolve(render_filepath, "static_data");
+console.log("in destiny_two: ", folder_path);
 if (!fs.existsSync(folder_path)) {
     fs.mkdirSync("static_data");
     console.log("DOES IT EXIST: ", fs.existsSync(folder_path));
 }
-path.resolve(__dirname, "../routes");
+path.resolve(render_filepath, "routes");
 loadAllFiles();
 console.log(DISCORD_TOKEN, CLIENT_ID, CLIENT_SECRET, API_KEY);
 //routes

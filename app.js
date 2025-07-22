@@ -8,14 +8,14 @@ var flash = require('express-flash');
 const {Zebra, text_command} = require('./scripts/cmd_multitool');
 var homeRouter = require('./routes/home');
 const destiny_req = require('./routes/destiny_two');
-console.log("destiny_req: ",destiny_req);
+//console.log("destiny_req: ",destiny_req);
 var destinyRouter = destiny_req.router;
-console.log("destinyRouter: ", destinyRouter);
+//console.log("destinyRouter: ", destinyRouter);
 var destiny_commands = destiny_req.destiny_commands;
 //idk why it won't let me use the {router, destiny_commands} syntax. mysterious error.
 
 const app = express();
-console.log("in app. path: ", __dirname);
+//console.log("in app. path: ", __dirname);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
