@@ -66,7 +66,7 @@ async function loadAllFiles(){
     load_result = false;
     try { load_result = await loadFromFile("DestinyPlugSetDefinition", plugset_definitions); }
     catch { console.log("Error while loading DestinyPlugSetDefinition."); }
-    if(process.env.OWNLOAD == 1) {
+    if(process.env.DOWNLOAD == 1) {
         destiny_commands.destiny_manifest("lore","");
         destiny_commands.destiny_manifest("weapon","definitions");
         destiny_commands.destiny_manifest("sockettype","");
@@ -833,6 +833,7 @@ class destiny_commands {
 
 // temporary. until i make an endpoint for myself to send commands
 async function genericSaveDefinitions(session_id, api_key, data, the_dict) {
+    console.log(data);
     let def_keys = Object.keys(data);
     let entry, string_key;
     for(let i =0; i < def_keys.length; i++)
