@@ -28,7 +28,7 @@ const sockettype_definitions = {};
 const perk_definitions = {};
 const plugset_definitions = {};
 
-const render_filepath = "";
+const render_filepath = "../../../../";
 
 // MANIFEST ZONE
 //destiny_commands.destiny_manifest("","");
