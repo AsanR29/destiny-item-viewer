@@ -826,6 +826,7 @@ class destiny_commands {
                     writeToFile("DestinyPlugSetDefinition", plugset_definitions);
 
                     writeToFile("weapon_directory", weapon_directory);
+                    writeToFile("socket_directory", socket_directory);
                     writeToFile("socket_to_weapon", socket_to_weapon);
                     writeToFile("weapon_to_socket", weapon_to_socket);
                     console.log("hopefully all those files were written");
