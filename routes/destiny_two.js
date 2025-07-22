@@ -233,7 +233,7 @@ router.get('/ref', function(req, res, next) {
 
 async function loadFromFile(file_name, target_dict) {
     val = false;
-    fs.readFile("static_data/"+file_name+".json", "utf8", async (err,data) => {
+    fs.readFile(render_filepath+"static_data/"+file_name+".json", "utf8", async (err,data) => {
         if (err) {
             console.log("error?");
             console.error(err);
@@ -277,7 +277,7 @@ async function shelfSocket(target_dict, hash, socket) {
         target_dict[socket].push(hash);
 }
 async function writeToFile(file_name, data) {
-    fs.writeFile("static_data/"+file_name+".json", JSON.stringify(data), { flag: 'w+' }, err => {
+    fs.writeFile(render_filepath+"static_data/"+file_name+".json", JSON.stringify(data), { flag: 'w+' }, err => {
     if (err) {
         console.error(err);
     } else {
