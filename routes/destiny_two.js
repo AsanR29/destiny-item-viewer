@@ -423,6 +423,11 @@ async function printResults(session_id=-1, api_key, data) {
     saveResults(session_id, api_key, data);
     writeToFile("test_output", item_data);
 };
+async function saveManifest(session_id=-1, api_key, data) {
+    item_data = data.Response;
+    if(!item_data){ console.log("Undefined item_data."); return; }
+    writeToFile("test_output", item_data);
+};
 async function printSockets(session_id=-1, api_key, item_data) {
     let type_hash;
     let instance_hash;
@@ -651,6 +656,7 @@ class destiny_commands {
             switch (type)
             {
                 case "weapon":
+                    let r_url;
                     console.log("id ", id, " equals:", (id == "all"));
                     switch(id[0]) {
                         case "all":
@@ -671,7 +677,7 @@ class destiny_commands {
                             break;
                         case "definitions":
                             console.log("in definitions");
-                            let r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinyInventoryItemDefinition-c72a34d3-f297-4f5f-8da6-8767b662554d.json";
+                            r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinyInventoryItemDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
                             await create(-1,r_url,API_KEY, {},
                                 saveWeaponDefinitions, "GET"
                             );
@@ -693,7 +699,7 @@ class destiny_commands {
                             break;
                         case "definitions":
                             console.log("in definitions");
-                            let r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinySandboxPerkDefinition-c72a34d3-f297-4f5f-8da6-8767b662554d.json";
+                            let r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinySandboxPerkDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
                             await create(-1,r_url,API_KEY, {},
                                 saveSandboxDefinitions, "GET"
                             );
@@ -702,7 +708,7 @@ class destiny_commands {
                     break;
                 case "lore":
                     console.log("Manifest lore?");
-                    r_url = "https://www.bungie.net/" + "/common/destiny2_content/json/en/DestinyLoreDefinition-c72a34d3-f297-4f5f-8da6-8767b662554d.json";
+                    r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinyLoreDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
                     await create(-1,r_url,API_KEY, {
                         //"components":"300"
                     },
@@ -711,7 +717,7 @@ class destiny_commands {
                     break;
                 case "plugset":
                     console.log("Manifest plugset?");
-                    r_url = "https://www.bungie.net/" + "/common/destiny2_content/json/en/DestinyPlugSetDefinition-c72a34d3-f297-4f5f-8da6-8767b662554d.json";
+                    r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinyPlugSetDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
                     await create(-1,r_url,API_KEY, {
                         //"components":"300"
                     },
@@ -720,7 +726,7 @@ class destiny_commands {
                     break;
                 case "sockettype":
                     console.log("Manifest socket types?");
-                    r_url = "https://www.bungie.net/" + "/common/destiny2_content/json/en/DestinySocketTypeDefinition-c72a34d3-f297-4f5f-8da6-8767b662554d.json";
+                    r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinySocketTypeDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
                     await create(-1,r_url,API_KEY, {
                         //"components":"300"
                     },
@@ -733,7 +739,7 @@ class destiny_commands {
                     await create(-1,r_url,API_KEY, {
                         //"components":"300"
                     },
-                        printResults, "GET"
+                        saveManifest, "GET"
                     );
                     break;
             }
@@ -833,7 +839,7 @@ class destiny_commands {
 
 // temporary. until i make an endpoint for myself to send commands
 async function genericSaveDefinitions(session_id, api_key, data, the_dict) {
-    console.log(data);
+    //console.log(data);
     let def_keys = Object.keys(data);
     let entry, string_key;
     for(let i =0; i < def_keys.length; i++)
