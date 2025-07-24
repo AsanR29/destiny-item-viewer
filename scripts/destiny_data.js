@@ -94,8 +94,8 @@ class destiny_data {
                 for(let i = 0; i < j_keys.length; i++)
                 {
                     target_dict[j_keys[i]] = input[j_keys[i]];
-                    if(target_dict == this.weapon_directory){ await shelfWeapon(this.categorised_guns, j_keys[i], input[j_keys[i]]); }
-                    else if(target_dict == this.socket_directory){ await unpackSocket(this.categorised_sockets, j_keys[i], input[j_keys[i]])}
+                    if(target_dict == this.weapon_directory){ await this.shelfWeapon(this.categorised_guns, j_keys[i], input[j_keys[i]]); }
+                    else if(target_dict == this.socket_directory){ await this.unpackSocket(this.categorised_sockets, j_keys[i], input[j_keys[i]])}
                 }
             }
         });
