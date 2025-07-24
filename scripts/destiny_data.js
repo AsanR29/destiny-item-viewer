@@ -29,8 +29,8 @@ class destiny_data {
     // load saved weapon data
     static async loadAllFiles(){
         let load_result = false;
-        try{ this.loadFromFile("weapon_directory", this.weapon_directory); }
-        catch { console.log("Error while loading weapon_directory."); }
+        //try{ this.loadFromFile("weapon_directory", this.weapon_directory); }
+        //catch { console.log("Error while loading weapon_directory."); }
         // load saved lore data
         load_result = false;
         try { load_result = await this.loadFromFile("lore_directory", this.lore_directory); }
