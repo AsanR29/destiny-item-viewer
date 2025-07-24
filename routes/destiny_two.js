@@ -74,21 +74,24 @@ router.get('/player', function(req, res, next) {
 });
 
 async function vault_call(req, res, next){
-    filter = req.params.filter;
-    inventory_data = {};
+    let filter = req.params.filter;
+    let inventory_data = {};
 
-    player = DD.player_directory[req.sessionID];
+    let player = DD.player_directory[req.sessionID];
     if(player && ("100" in player)){
-        vault = player["100"];
-        vault_keys = Object.keys(vault);
+        let vault = player["100"];
+        let vault_keys = Object.keys(vault);
+        let item_data = {};
+        let gun = {};
         for(let i = 0; i < vault_keys.length; i++){
             item_data = DD.item_definitions[vault_keys[i]];
-            console.log(item_data);
+            //console.log(item_data);
             gun = DD.parseGunData(item_data);
             inventory_data[vault_keys[i]] = gun;
         }
     }
-    if(!filter){ filter = false; }
+    //if(!filter){ filter = false; }
+    filter = false;
     res.render('destiny/destiny_vault', { title: "Your vault", vault_data: inventory_data, filter: filter} );
 }
 router.get('/vault', vault_call);
