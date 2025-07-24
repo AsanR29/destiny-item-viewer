@@ -7,112 +7,41 @@ const { URLSearchParams } = require('url');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const API_KEY = process.env.API_KEY;
+const DD = require("../scripts/destiny_data");
 
-const player_directory = {};
-var next_id = 0;
-const weapon_directory = {};
-const categorised_guns = {};
-const lore_directory = {};
-const socket_directory = {};
-const categorised_sockets = {};
-
-const socket_to_weapon = {};
-const weapon_to_socket = {};
-
-const item_definitions = {};
-const sockettype_definitions = {};
-const perk_definitions = {};
-const plugset_definitions = {};
-
-const render_filepath = "../../../../";
-
-// MANIFEST ZONE
-//destiny_commands.destiny_manifest("","");
-// load saved weapon data
-async function loadAllFiles(){
-    let load_result = false;
-    try{ loadFromFile("weapon_directory", weapon_directory); }
-    catch { console.log("Error while loading weapon_directory."); }
-    // load saved lore data
-    load_result = false;
-    try { load_result = await loadFromFile("lore_directory", lore_directory); }
-    catch { console.log("Error while loading lore_directory."); }
-    // load saved socket data
-    try { loadFromFile("socket_directory", socket_directory); }
-    catch { console.log("Error while loading socket_directory."); }
-    // etc
-    try { loadFromFile("socket_to_weapon", socket_to_weapon); }
-    catch { console.log("Error while loading socket_to_weapon."); }
-    // etc
-    try { loadFromFile("weapon_to_socket", weapon_to_socket); }
-    catch { console.log("Error while loading weapon_to_socket."); }
-    // ALL item definitions...?
-    load_result = false;
-    try { load_result = await loadFromFile("DestinyInventoryItemDefinition", item_definitions); }
-    catch { console.log("Error while loading DestinyInventoryItemDefinition."); }
-    // ALL socket type definitions
-    load_result = false;
-    try { load_result = await loadFromFile("DestinySocketTypeDefinition", sockettype_definitions); }
-    catch{ console.log("Error while loading DestinySocketTypeDefinition."); }
-    // ALL perk definitions...?
-    load_result = false;
-    try { load_result = await loadFromFile("DestinySandboxPerkDefinition", perk_definitions); }
-    catch { console.log("Error while loading DestinySandboxPerkDefinition."); }
-    // ALL plugset (randomised perk collection) definitions
-    load_result = false;
-    try { load_result = await loadFromFile("DestinyPlugSetDefinition", plugset_definitions); }
-    catch { console.log("Error while loading DestinyPlugSetDefinition."); }
-    if(process.env.DOWNLOAD == 1) {
-        destiny_commands.destiny_manifest("lore",[""]);
-        destiny_commands.destiny_manifest("weapon",["definitions"]);
-        destiny_commands.destiny_manifest("sockettype",[""]);
-        destiny_commands.destiny_manifest("socket",["definitions"]);
-        destiny_commands.destiny_manifest("plugset",[""]);
-    }
-}
-
-let folder_path = path.resolve(render_filepath, "static_data");
-console.log("in destiny_two: ", folder_path);
-if (!fs.existsSync(folder_path)) {
-    fs.mkdirSync("static_data");
-    console.log("DOES IT EXIST: ", fs.existsSync(folder_path));
-}
-
-loadAllFiles();
-console.log(DISCORD_TOKEN, CLIENT_ID, CLIENT_SECRET, API_KEY);
 //routes
-
 router.get('/',  function(req, res, next) {
     res.render('destiny/destiny_homepage', { title: "Destiny Two", unique_users: 3 } );
 });
 
 router.get('/login', function(req, res, next) {
-
-    res.render('destiny/destiny_login', { title: "Get in" } );
+    res.render('destiny/destiny_login', { title: "Bungie Account Details" } );
 });
-
+router.get('/loginguest', function(req, res, next) {
+    let guest_form = {  // My account.
+        "displayName": "Nasa2907",
+        "displayNameCode": "1043"
+    };
+    loginUser(req.sessionID, guest_form).then(res.redirect('/vault'));
+});
 async function loginUser(session_id, form) {
     console.log(" LOG IN USER ");
     const base_auth_url = "https://www.bungie.net/en/OAuth/Authorize";
     const token_url = "https://www.bungie.net/platform/app/oauth/token/";
 
     //dictionary to hold extra headers
-    const HEADERS = {"X-API-Key":API_KEY};
+    const HEADERS = {"X-API-Key":DD.API_KEY};
     membershipType = "All";
 
     url = 'https://www.bungie.net/platform/Destiny2/SearchDestinyPlayerByBungieName/' + membershipType + '/';
     User = {"displayName":form.displayName, "displayNameCode":form.displayNameCode};
     console.log("session_id ",session_id);
-    player_directory[session_id] = {
+    DD.player_directory[session_id] = {
         "displayName": form.displayName,
         "displayNameCode": form.displayNameCode
     };
-
-    await create(session_id, url=url,api_key=API_KEY, {
+    console.log("passed?");
+    await create(session_id, url=url,api_key=DD.API_KEY, {
         "displayName": form.displayName,
         "displayNameCode": form.displayNameCode
     },
@@ -148,13 +77,14 @@ async function vault_call(req, res, next){
     filter = req.params.filter;
     inventory_data = {};
 
-    player = player_directory[req.sessionID];
-    if(player && ("100" in player)){ 
+    player = DD.player_directory[req.sessionID];
+    if(player && ("100" in player)){
         vault = player["100"];
         vault_keys = Object.keys(vault);
         for(let i = 0; i < vault_keys.length; i++){
-            item_data = item_definitions[vault_keys[i]];
-            gun = parseGunData(item_data);
+            item_data = DD.item_definitions[vault_keys[i]];
+            console.log(item_data);
+            gun = DD.parseGunData(item_data);
             inventory_data[vault_keys[i]] = gun;
         }
     }
@@ -197,13 +127,13 @@ router.get('/gun/:gun_id', function(req, res, next) {
     res.render('destiny/gun_individual', { title: "Weapon Data", gun_data: gun, socket_data: gun_sockets} );
 });
 router.get('/model/:gun_id', function(req, res, next) {
-    let item_data = item_definitions[req.params.gun_id];
-    let gun = parseGunData(item_data);
+    let item_data = DD.item_definitions[req.params.gun_id];
+    let gun = DD.parseGunData(item_data);
     let text = false;
     let desc = false;
     console.log("lore: ", gun, gun["lore"]);
-    if(gun["lore"] && lore_directory[gun["lore"]]){
-        text = lore_directory[gun["lore"]];
+    if(gun["lore"] && DD.lore_directory[gun["lore"]]){
+        text = DD.lore_directory[gun["lore"]];
         desc = text["displayProperties"]["description"];
         text["displayProperties"]["description"] = desc;
     }
@@ -213,125 +143,34 @@ router.get('/model/:gun_id', function(req, res, next) {
     let gun_sockets = [];
     let sock;
     let perk_hash; let perk;
-    for(let i = 0; i < weapon_to_socket[req.params.gun_id].length; i++){
-        sock = item_definitions[weapon_to_socket[req.params.gun_id][i]];
+    if(req.params.gun_id in DD.weapon_to_socket) {
+        for(let i = 0; i < DD.weapon_to_socket[req.params.gun_id].length; i++){
+            sock = DD.item_definitions[DD.weapon_to_socket[req.params.gun_id][i]];
 
-        if(sock){
-            perk_hash = sock["perks"]["perkHash"];
-            perk = perk_definitions[perk_hash];
-            perk = parseSocketData(sock);
-            if(perk.itemCategoryHashes.includes(610365472) && !(perk.itemCategoryHashes.includes(1052191496))){
-                gun_sockets.push(perk);
+            if(sock){
+                perk_hash = sock["perks"]["perkHash"];
+                perk = DD.perk_definitions[perk_hash];
+                perk = DD.parseSocketData(sock);
+                if(perk.itemCategoryHashes.includes(610365472) && !(perk.itemCategoryHashes.includes(1052191496))){
+                    gun_sockets.push(perk);
+                }
             }
         }
     }
     res.render('destiny/gun_model', { title: "Weapon Data", gun_data: gun, socket_data: gun_sockets} );
 });
 
+router.get('/random', function(req, res, next) {
+    let keys = Object.keys(DD.weapon_directory);
+    let max = keys.length;
+    let id = Math.floor(Math.random() * max);
+    
+    res.redirect(`/model/${keys[id]}`);
+});
 router.get('/ref', function(req, res, next) {
     res.render('destiny/destiny_ref_page', { title: "Your Account"} );
 });
 
-
-async function loadFromFile(file_name, target_dict) {
-    val = false;
-    fs.readFile(render_filepath+"static_data/"+file_name+".json", "utf8", async (err,data) => {
-        if (err) {
-            console.log("error?");
-            console.error(err);
-            //throw err;
-        }
-        // file written successfully
-        val = data;
-        console.log("success");
-
-        try{
-            input = JSON.parse(val);
-        } catch(err){ console.log(err); return false; }
-        console.log("input length ", input.length);
-        if(target_dict.length == 0)
-        { target_dict = input; }
-        else {
-            j_keys = Object.keys(input);
-            console.log("j_keys length ",j_keys.length);
-            for(let i = 0; i < j_keys.length; i++)
-            {
-                target_dict[j_keys[i]] = input[j_keys[i]];
-                if(target_dict == weapon_directory){ await shelfWeapon(categorised_guns, j_keys[i], input[j_keys[i]]); }
-                else if(target_dict == socket_directory){ await unpackSocket(categorised_sockets, j_keys[i], input[j_keys[i]])}
-            }
-        }
-    });
-    return true;
-};
-async function shelfWeapon(target_dict, hash, gun) {
-    if(!(gun["itemTypeDesc"] in target_dict)){ target_dict[gun["itemTypeDesc"]] = []; }
-    target_dict[gun["itemTypeDesc"]].push(hash);
-};
-async function unpackSocket(target_dict, hash, sockets) {
-    let cats = sockets["itemCategoryHashes"];
-    for(let i = 0; i < cats.length; i++){
-        await shelfSocket(target_dict, hash, cats[i]);
-    }
-}
-async function shelfSocket(target_dict, hash, socket) {
-    if(!(socket in target_dict)){ target_dict[socket] = []; }
-        target_dict[socket].push(hash);
-}
-async function writeToFile(file_name, data) {
-    fs.writeFile(render_filepath+"static_data/"+file_name+".json", JSON.stringify(data), { flag: 'w+' }, err => {
-    if (err) {
-        console.error(err);
-    } else {
-        // file written successfully
-        console.log("success");
-    }
-    });
-};
-
-async function saveWeaponDefinitions(session_id, api_key, data) {
-    console.log("Save Weapon Definitions.");
-    let def_keys = Object.keys(data);
-    let entry, string_key;
-    for(let i = 0; i < def_keys.length; i++)
-    {
-        entry = data[def_keys[i]];
-        string_key = def_keys[i].toString();
-        if(!(string_key in item_definitions))
-        {
-            item_definitions[string_key] = entry;
-        }
-        if(!(string_key in weapon_directory) || weapon_directory[string_key] == false) {
-            weapon_directory[string_key] = parseGunData(entry);
-            item_data = weapon_directory[string_key];
-
-            if(entry["itemType"] == 3){
-                if("sockets" in entry){
-                    let socket_array = entry["sockets"]["socketEntries"];
-                    let plug_hash;
-                    let perk_array;
-                    for(let j = 0; j < socket_array.length; j++){
-                        if("randomizedPlugSetHash" in socket_array[j]){
-                            plug_hash = socket_array[j]["randomizedPlugSetHash"];
-
-                            perk_array = plugset_definitions[plug_hash]["reusablePlugItems"];
-                            if(!(string_key in weapon_to_socket)){ weapon_to_socket[string_key] = []; }
-                            for(let k = 0; k < perk_array.length; k++){
-
-                                perk_hash = perk_array[k]["plugItemHash"];
-                                if(!(weapon_to_socket[string_key].includes(perk_hash))){
-                                    weapon_to_socket[string_key].push(perk_hash); 
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    console.log("definitions GOTTEN!");
-    return;
-};
 async function saveSocketDefinitions(session_id, api_key, data) {
     let def_keys = Object.keys(data);
     let entry, string_key;
@@ -346,67 +185,6 @@ async function saveSocketDefinitions(session_id, api_key, data) {
     }
     console.log("definitions GOTTEN!");
     return;
-};
-
-function parseGunData(item_data) {
-    if(!(item_data) || !("hash" in item_data)){ return; } // can't be saved ATM without a hash
-    itemHash = item_data["hash"];
-    itemName = false;
-    itemIcon = false;
-    itemDesc = false;
-    itemType = false;
-    itemTypeDesc = false;
-    itemLore = false;
-    itemScreenshot = false;
-    try{
-        itemName = item_data["displayProperties"]["name"];
-        itemIcon = item_data["displayProperties"]["icon"];
-        itemType = item_data["itemType"];
-        itemTypeDesc = item_data["itemTypeDisplayName"];
-        itemLore = item_data["loreHash"];
-        itemScreenshot = item_data["screenshot"];
-
-        itemDesc = item_data["displayProperties"]["description"];
-        if(itemDesc != ""){
-            itemDesc = item_data["displayProperties"]["description"];
-        }
-        else{   //then i think it's a gun
-            itemDesc = item_data["flavorText"];
-        }
-    }
-    catch{
-        console.log("caught weapon reading error.");
-    }
-    return {"name":itemName,"icon":itemIcon,"description":itemDesc,"itemTypeDesc":itemTypeDesc,"itemType":itemType,"lore":itemLore,"screenshot":itemScreenshot};
-};
-function parseSocketData(item_data){
-    itemHash = false;
-    //itemType = false;
-    itemSubType = false;
-    itemName = false;
-    itemDesc = false;
-    itemIcon = false;
-    itemTypeDesc = false;
-    itemCategories = false;
-
-    itemHash = item_data["hash"];
-    // itemType is always 19
-    /*
-    itemType = item_data["itemType"];
-    if(!(itemType in socket_directory))
-    {
-        socket_directory[itemType] = {};
-    }*/
-    if("itemSubType" in item_data){ itemSubType = item_data["itemSubType"]; }
-    if("displayProperties" in item_data){
-        itemName = item_data["displayProperties"]["name"];
-        itemDesc = item_data["displayProperties"]["description"];
-        if(item_data["displayProperties"]["hasIcon"]){ itemIcon = item_data["displayProperties"]["icon"]; }
-    }
-    if("itemTypeDisplayName" in item_data){ itemTypeDesc = item_data["itemTypeDisplayName"]; }
-    if("itemCategoryHashes" in item_data){ itemCategories = item_data["itemCategoryHashes"]; }
-
-    return {"name":itemName,"description":itemDesc,"icon":itemIcon,"itemTypeDesc":itemTypeDesc,"subType":itemSubType,"itemCategoryHashes":itemCategories};
 };
 
 async function saveResults(session_id=-1, api_key, data) {
@@ -473,6 +251,7 @@ async function saveSocket(session_id=-1, api_key, data) {
     await unpackSocket(categorised_sockets, itemHash, item_data);
     return;
 }
+
 async function getItemDetail(session_id, api_key, data) {
     player = player_directory[session_id];
     inventory_data = data.Response["characterInventories"]["data"];
@@ -489,7 +268,8 @@ async function getItemDetail(session_id, api_key, data) {
 };
 
 async function getWeaponHashes(session_id, api_key, data) {
-    player = player_directory[session_id];
+    console.log("in getWeaponHashes");
+    player = DD.player_directory[session_id];
     open_inventory = [];
 
     let chara_id = 0;
@@ -508,23 +288,24 @@ async function getWeaponHashes(session_id, api_key, data) {
         open_inventory = inventory_data["items"];
         chara_id = "100";   //for vault
     }
-
-    player_directory[session_id][chara_id] = {};
+    console.log(`chara_id is ${chara_id}`);
+    DD.player_directory[session_id][chara_id] = {};
     for(let i = 0; i < open_inventory.length; i++)
     {
         let key = open_inventory[i]["itemHash"];
         let string_key = key.toString();
-        if(!(string_key in weapon_directory))
+        if(!(string_key in DD.weapon_directory))
         {
-            //weapon_directory[string_key] = false;
-            player_directory[session_id][chara_id][string_key] = false;
+            DD.weapon_directory[string_key] = false;
+            DD.player_directory[session_id][chara_id][string_key] = false;
         }
     }
-    writeToFile("weapon_directory", weapon_directory);
+    //writeToFile("weapon_directory", DD.weapon_directory);
     return;
 };
 async function getItems(session_id, api_key, data) {
-    player = player_directory[session_id];
+    console.log("in getItems");
+    player = DD.player_directory[session_id];
     ids = Object.keys(data.Response["characters"].data);
     player.chara_ids = [];
     player.chara_metadata = [];
@@ -542,7 +323,7 @@ async function getItems(session_id, api_key, data) {
     );
 };
 async function getCharacters(session_id, api_key, data) {
-    player = player_directory[session_id];
+    player = DD.player_directory[session_id];
     player["membershipType"] = data.Response[0]["membershipType"];
     player["membershipId"] = data.Response[0]["membershipId"];
     r_url = "https://www.bungie.net/platform/Destiny2/" + data.Response[0]["membershipType"] + "/Profile/" + data.Response[0]["membershipId"];
@@ -624,7 +405,6 @@ function makeRequest(){
 
 // only trigger on the server's commandline
 class destiny_commands {
-    contructor(){}
     static destiny_show = function(target, id){
         console.log(`Show ${target} ${id}\n`);
         try {
@@ -666,7 +446,7 @@ class destiny_commands {
                                 if(weapon_directory[key] == false){
                                     //r_url = "https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/" + key + "/";
                                     r_url = "https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/" + key + "/";
-                                    await create(-1,r_url,API_KEY, {
+                                    await create(-1,r_url,DD.API_KEY, {
                                         //"components":"300"
                                     },
                                         saveResults, "GET"
@@ -677,14 +457,14 @@ class destiny_commands {
                         case "definitions":
                             console.log("in definitions");
                             r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinyInventoryItemDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
-                            await create(-1,r_url,API_KEY, {},
+                            await create(-1,r_url,DD.API_KEY, {},
                                 saveWeaponDefinitions, "GET"
                             );
                             break;
                         default:
                             console.log("in specific");
                             r_url = "https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/" + id + "/";
-                            create(-1,r_url,API_KEY, {
+                            create(-1,r_url,DD.API_KEY, {
                                 //"components":"300"
                             },
                                 printResults, "GET"
@@ -699,7 +479,7 @@ class destiny_commands {
                         case "definitions":
                             console.log("in definitions");
                             r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinySandboxPerkDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
-                            await create(-1,r_url,API_KEY, {},
+                            await create(-1,r_url,DD.API_KEY, {},
                                 saveSandboxDefinitions, "GET"
                             );
                             break;
@@ -708,7 +488,7 @@ class destiny_commands {
                 case "lore":
                     console.log("Manifest lore?");
                     r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinyLoreDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
-                    await create(-1,r_url,API_KEY, {
+                    await create(-1,r_url,DD.API_KEY, {
                         //"components":"300"
                     },
                         saveLoreDefinitions, "GET"
@@ -717,7 +497,7 @@ class destiny_commands {
                 case "plugset":
                     console.log("Manifest plugset?");
                     r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinyPlugSetDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
-                    await create(-1,r_url,API_KEY, {
+                    await create(-1,r_url,DD.API_KEY, {
                         //"components":"300"
                     },
                         savePlugsetDefinitions, "GET"
@@ -726,7 +506,7 @@ class destiny_commands {
                 case "sockettype":
                     console.log("Manifest socket types?");
                     r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinySocketTypeDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
-                    await create(-1,r_url,API_KEY, {
+                    await create(-1,r_url,DD.API_KEY, {
                         //"components":"300"
                     },
                         saveSockettypeDefinitions, "GET"
@@ -735,7 +515,7 @@ class destiny_commands {
                 default:
                     console.log("Manifest default?");
                     r_url = "https://www.bungie.net/platform/Destiny2/Manifest/";
-                    await create(-1,r_url,API_KEY, {
+                    await create(-1,r_url,DD.API_KEY, {
                         //"components":"300"
                     },
                         saveManifest, "GET"
@@ -769,7 +549,7 @@ class destiny_commands {
                                             //console.log(`plug #${j}.`);
                                             plug_hash = socket["reusablePlugItems"][k]["plugItemHash"];
                                             r_url = "https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/" + plug_hash + "/";
-                                            create(-1,r_url,API_KEY, {
+                                            create(-1,r_url,DD.API_KEY, {
                                                 //"components":"300"
                                             },
                                                 saveSocket, "GET"
@@ -780,7 +560,7 @@ class destiny_commands {
                                 if(weapon_directory[key] == false){
                                     //r_url = "https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/" + key + "/";
                                     r_url = "https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/" + key + "/";
-                                    create(-1,r_url,API_KEY, {
+                                    create(-1,r_url,DD.API_KEY, {
                                         //"components":"300"
                                     },
                                         saveResults, "GET"
@@ -872,7 +652,6 @@ async function save_data_command(){
     await destiny_commands.destiny_save("everything","");
     console.log("saved all (command)");
 }
-setTimeout(save_data_command,600000);   //10 minutes
+//setTimeout(save_data_command,600000);   //10 minutes
 
-//console.log(router);
 module.exports = {"router":router, "destiny_commands":destiny_commands};

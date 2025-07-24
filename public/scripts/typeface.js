@@ -1,6 +1,6 @@
 function measureArea(element_id, denominator){
     let element = document.getElementById(element_id);
-    let newRows = Math.ceil((Number.parseInt(element.offsetHeight)+320) / denominator) -1;
+    let newRows = Math.ceil((Number.parseInt(element.offsetHeight)+320) / denominator) ;
     return newRows;
 };
 
