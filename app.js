@@ -11,7 +11,7 @@ const destiny_req = require('./routes/destiny_two');
 //console.log("destiny_req: ",destiny_req);
 var destinyRouter = destiny_req.router;
 //console.log("destinyRouter: ", destinyRouter);
-var destiny_commands = destiny_req.destiny_commands;
+var destiny_commands = require('./scripts/destiny_commands'); //destiny_req.destiny_commands;
 //idk why it won't let me use the {router, destiny_commands} syntax. mysterious error.
 
 const app = express();
@@ -55,5 +55,6 @@ text_command.save.execute = destiny_commands.destiny_save;
 //const server = app.listen(3000, () => {
 //    console.log(`The application started on port ${server.address().port}`);
 //});
+
 
 module.exports = app;

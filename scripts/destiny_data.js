@@ -6,6 +6,7 @@ class destiny_data {
     static CLIENT_ID = process.env.CLIENT_ID;
     static CLIENT_SECRET = process.env.CLIENT_SECRET;
     static API_KEY = process.env.API_KEY;
+    static ENDPOINT_PASSWORD = process.env.ENDPOINT_PASSWORD;
 
     static player_directory = {};
     static weapon_directory = {};
@@ -171,6 +172,43 @@ class destiny_data {
         console.log("definitions GOTTEN!");
         return;
     };
+    static async getWeaponHashes(session_id, data) {
+        console.log("in getWeaponHashes");
+        let player = this.player_directory[session_id];
+        let open_inventory = [];
+
+        let inventory_data;
+        let chara_id = 0;
+        if( "characterInventories" in data.Response ) {     // components 201
+            inventory_data = data.Response["characterInventories"]["data"];
+            open_inventory = inventory_data[player.chara_ids[0]]["items"];
+            chara_id = String(player.chara_ids[0]);
+        }
+        else if( "characterEquipment" in data.Response ) {  // components 205
+            inventory_data = data.Response["characterEquipment"]["data"];
+            open_inventory = inventory_data[player.chara_ids[0]]["items"];
+            chara_id = String(player.chara_ids[0]);
+        }
+        else if( "profileInventory" in data.Response ) {    // components 102
+            inventory_data = data.Response["profileInventory"]["data"];
+            open_inventory = inventory_data["items"];
+            chara_id = "100";   //for vault
+        }
+        console.log(`chara_id is ${chara_id}`);
+        this.player_directory[session_id][chara_id] = {};
+        for(let i = 0; i < open_inventory.length; i++)
+        {
+            let key = open_inventory[i]["itemHash"];
+            let string_key = key.toString();
+            if(!(string_key in this.weapon_directory))
+            {
+                this.weapon_directory[string_key] = false;
+                this.player_directory[session_id][chara_id][string_key] = false;
+            }
+        }
+        //writeToFile("weapon_directory", this.weapon_directory);
+        return;
+    };
     //parse-data functions
     static parseGunData(item_data) {
         if(!(item_data) || !("hash" in item_data)){ return; } // can't be saved ATM without a hash
@@ -225,7 +263,105 @@ class destiny_data {
         if("itemTypeDisplayName" in item_data){ itemTypeDesc = item_data["itemTypeDisplayName"]; }
         if("itemCategoryHashes" in item_data){ itemCategories = item_data["itemCategoryHashes"]; }
 
-        return {"name":itemName,"description":itemDesc,"icon":itemIcon,"itemTypeDesc":itemTypeDesc,"subType":itemSubType,"itemCategoryHashes":itemCategories};
+        return {"name":itemName,"description":itemDesc,"icon":itemIcon,"itemTypeDesc":itemTypeDesc,"subType":itemSubType,"itemCategoryHashes":itemCategories,"hash":itemHash};
+    };
+
+
+    static async saveSocketDefinitions(data) {
+        let def_keys = Object.keys(data);
+        let entry, string_key;
+        for(let i =0; i < def_keys.length; i++)
+        {
+            entry = data[def_keys[i]];
+            string_key = def_keys[i].toString();
+            if(!(string_key in this.socket_definitions))
+            {
+                this.socket_definitions[string_key] = entry;
+            }
+        }
+        console.log("definitions GOTTEN!");
+        return;
+    };
+
+    static async saveResults(data) {
+        let item_data = data.Response;
+        let gun_data = parseGunData(item_data);
+
+        this.weapon_directory[itemHash] = gun_data;
+        printSockets(item_data);
+    }
+    static async printResults(data) {
+        let item_data = data.Response;
+        if(!item_data){ console.log("Undefined item_data."); return; }
+
+        saveResults(data);
+        writeToFile("test_output", item_data);
+    };
+    static async saveManifest(data) {
+        let item_data = data.Response;
+        if(!item_data){ console.log("Undefined item_data."); return; }
+        writeToFile("test_output", item_data);
+    };
+    static async printSockets(item_data) {
+        let type_hash;
+        let instance_hash;
+        let plug_hash;
+        if("sockets" in item_data){
+            let socket_array = item_data["sockets"]["socketEntries"];
+            for(let i = 0; i < socket_array.length; i++){
+
+                type_hash = socket_array[i]["socketTypeHash"];
+                instance_hash = socket_array[i]["singleInitialItemHash"];
+                if("reusablePlugItems" in socket_array[i]){
+                    for(let j = 0; j < socket_array[i]["reusablePlugItems"].length; j++){
+                        plug_hash = socket_array[i]["reusablePlugItems"][j]["plugItemHash"];
+
+                        if(!(plug_hash in this.socket_to_weapon)){ this.socket_to_weapon[plug_hash] = []; }
+                        if(!(this.socket_to_weapon[plug_hash].includes(item_data["hash"])))
+                        { this.socket_to_weapon[plug_hash].push(item_data["hash"]); }
+                        if(!(item_data["hash"] in this.weapon_to_socket)){ this.weapon_to_socket[item_data["hash"]] = []; }
+                        if(!(this.weapon_to_socket[item_data["hash"]].includes(plug_hash)))
+                        { this.weapon_to_socket[item_data["hash"]].push(plug_hash); }
+                        
+                        r_url = "https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/" + plug_hash + "/";
+                        await create(r_url, {
+                            //"components":"300"
+                        },
+                            saveSocket, "GET"
+                        );
+                    }
+
+                }
+            }
+        }
+    };
+    static async saveSocket(data) {
+        let item_data = data.Response;
+        if(!item_data){ 
+            //console.log("Undefined item_data."); 
+            return; 
+        }
+        
+        let socket_data = parseSocketData(item_data);
+        let itemHash = socket_data["hash"];
+        this.socket_directory[itemHash] = socket_data;
+        await unpackSocket(this.categorised_sockets, itemHash, item_data);
+        return;
+    }
+
+    static async getItemDetail(data) {
+        let player = player_directory[session_id];
+        let inventory_data = data.Response["characterInventories"]["data"];
+        let titan_inventory = inventory_data[player.chara_ids[0]]["items"];
+
+        console.log(`\n\n---itemHash: ${titan_inventory[0]["itemHash"]}---\n\n`);
+
+        //r_url = "https://www.bungie.net/platform/Destiny2/" + player["membershipType"] + "/Profile/" + player["membershipId"] + "/Item/" + titan_inventory[0]["itemInstanceId"] + "/";
+        let r_url = "https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/" + titan_inventory[0]["itemHash"] + "/";
+        
+        /*create(session_id,url=r_url,api_key=api_key, {},
+            printResults, "GET"
+        );*/
     };
 }
 
