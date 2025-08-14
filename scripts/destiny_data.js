@@ -1,12 +1,15 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+const DestinyPlayer = require("./destiny_player");
 class destiny_data {
     static DISCORD_TOKEN = process.env.DISCORD_TOKEN;
     static CLIENT_ID = process.env.CLIENT_ID;
     static CLIENT_SECRET = process.env.CLIENT_SECRET;
     static API_KEY = process.env.API_KEY;
     static ENDPOINT_PASSWORD = process.env.ENDPOINT_PASSWORD;
+
+    static render_filepath = process.env.DATA_PATH;
 
     static player_directory = {};
     static weapon_directory = {};
@@ -22,34 +25,27 @@ class destiny_data {
     static sockettype_definitions = {};
     static perk_definitions = {};
     static plugset_definitions = {};
-
-    static render_filepath = process.env.DATA_PATH;
+    static damagetype_definitions = {};
 
     // MANIFEST ZONE
     //destiny_commands.destiny_manifest("","");
     // load saved weapon data
     static async loadAllFiles(){
-        let load_result = false;
-        //try{ this.loadFromFile("weapon_directory", this.weapon_directory); }
-        //catch { console.log("Error while loading weapon_directory."); }
         // load saved lore data
-        load_result = false;
+        let load_result = false;
         try { load_result = await this.loadFromFile("lore_directory", this.lore_directory); }
         catch { console.log("Error while loading lore_directory."); }
-        // load saved socket data
-        this.loadFromFile("socket_directory", this.socket_directory)
-        try { ; }
-        catch { console.log("Error while loading socket_directory."); }
         // etc
-        try { this.loadFromFile("socket_to_weapon", this.socket_to_weapon); }
+        try { await this.loadFromFile("socket_to_weapon", this.socket_to_weapon); }
         catch { console.log("Error while loading socket_to_weapon."); }
         // etc
-        try { this.loadFromFile("weapon_to_socket", this.weapon_to_socket); }
+        try { await this.loadFromFile("weapon_to_socket", this.weapon_to_socket); }
         catch { console.log("Error while loading weapon_to_socket."); }
         // ALL item definitions...?
         load_result = false;
         try { load_result = await this.loadFromFile("DestinyInventoryItemDefinition", this.item_definitions); }
         catch { console.log("Error while loading DestinyInventoryItemDefinition."); }
+        //console.log("item definitions length: ",this.item_definitions);
         // ALL socket type definitions
         load_result = false;
         try { load_result = await this.loadFromFile("DestinySocketTypeDefinition", this.sockettype_definitions); }
@@ -62,44 +58,48 @@ class destiny_data {
         load_result = false;
         try { load_result = await this.loadFromFile("DestinyPlugSetDefinition", this.plugset_definitions); }
         catch { console.log("Error while loading DestinyPlugSetDefinition."); }
+        load_result = false;
+        try { load_result = await this.loadFromFile("DestinyDamageTypeDefinition", this.damagetype_definitions); }
+        catch { console.log("Error while loading DestinyDamageTypeDefinition."); }
+        // must go after item_definitions
+        // load saved socket data
+        try { await this.loadFromFile("socket_directory", this.socket_directory); }
+        catch { console.log("Error while loading socket_directory."); }
+        try{ await this.loadFromFile("weapon_directory", this.weapon_directory); }
+        catch { console.log("Error while loading weapon_directory."); }
+        
         if(process.env.DOWNLOAD == 1) {
             destiny_commands.destiny_manifest("lore",[""]);
             destiny_commands.destiny_manifest("weapon",["definitions"]);
             destiny_commands.destiny_manifest("sockettype",[""]);
             destiny_commands.destiny_manifest("socket",["definitions"]);
             destiny_commands.destiny_manifest("plugset",[""]);
+            destiny_commands.destiny_manifest("damagetype",[""]);
         }
     };
     static async loadFromFile(file_name, target_dict) {
         let val = false;
-        fs.readFile(this.render_filepath+"static_data/"+file_name+".json", "utf8", async (err,data) => {
-            if (err) {
-                console.log("error?");
-                console.error(err);
-                //throw err;
-            }
-            // file written successfully
-            val = data;
-            console.log("success");
+        let data = fs.readFileSync(this.render_filepath+"static_data/"+file_name+".json", "utf8");
+        // file written successfully
+        val = data;
+        console.log("success");
 
-            let input = "";
-            try{
-                input = JSON.parse(val);
-            } catch(err){ console.log(err); return false; }
-            console.log("input length ", input.length);
-            if(target_dict.length == 0)
-            { target_dict = input; }
-            else {
-                let j_keys = Object.keys(input);
-                console.log("j_keys length ",j_keys.length);
-                for(let i = 0; i < j_keys.length; i++)
-                {
-                    target_dict[j_keys[i]] = input[j_keys[i]];
-                    if(target_dict == this.weapon_directory){ await this.shelfWeapon(this.categorised_guns, j_keys[i], input[j_keys[i]]); }
-                    else if(target_dict == this.socket_directory){ await this.unpackSocket(this.categorised_sockets, j_keys[i], input[j_keys[i]])}
-                }
+        let input = "";
+        try{
+            input = JSON.parse(val);
+        } catch(err){ console.log(err); return false; }
+        if(target_dict.length == 0)
+        { target_dict = input; }
+        else {
+            let j_keys = Object.keys(input);
+            console.log("j_keys length ",j_keys.length);
+            for(let i = 0; i < j_keys.length; i++)
+            {
+                target_dict[j_keys[i]] = input[j_keys[i]];
+                if(target_dict == this.weapon_directory){ await this.shelfWeapon(this.categorised_guns, j_keys[i], input[j_keys[i]]); }
+                else if(target_dict == this.socket_directory){ await this.unpackSocket(this.categorised_sockets, j_keys[i], input[j_keys[i]])}
             }
-        });
+        }
         return true;
     };
 
@@ -115,6 +115,7 @@ class destiny_data {
     };
 
     static async shelfWeapon(target_dict, hash, gun) {
+        if(gun == false){ gun = this.parseGunData(this.item_definitions[hash]); }
         if(!(gun["itemTypeDesc"] in target_dict)){ target_dict[gun["itemTypeDesc"]] = []; }
         target_dict[gun["itemTypeDesc"]].push(hash);
     };
@@ -129,7 +130,7 @@ class destiny_data {
         }
     }
 
-    static async saveWeaponDefinitions(session_id, api_key, data) {
+    static async saveWeaponDefinitions(data) {
         console.log("Save Weapon Definitions.");
         let def_keys = Object.keys(data);
         let entry, string_key;
@@ -143,7 +144,7 @@ class destiny_data {
             }
             if(!(string_key in this.weapon_directory) || this.weapon_directory[string_key] == false) {
                 this.weapon_directory[string_key] = this.parseGunData(entry);
-                item_data = this.weapon_directory[string_key];
+                let item_data = this.weapon_directory[string_key];
 
                 if(entry["itemType"] == 3){
                     if("sockets" in entry){
@@ -158,7 +159,7 @@ class destiny_data {
                                 if(!(string_key in this.weapon_to_socket)){ this.weapon_to_socket[string_key] = []; }
                                 for(let k = 0; k < perk_array.length; k++){
 
-                                    perk_hash = perk_array[k]["plugItemHash"];
+                                    let perk_hash = perk_array[k]["plugItemHash"];
                                     if(!(this.weapon_to_socket[string_key].includes(perk_hash))){
                                         this.weapon_to_socket[string_key].push(perk_hash); 
                                     }
@@ -178,40 +179,58 @@ class destiny_data {
         let open_inventory = [];
 
         let inventory_data;
-        let chara_id = 0;
+        let chara_id = "vault";
+        this.printResults(data);
         if( "characterInventories" in data.Response ) {     // components 201
             inventory_data = data.Response["characterInventories"]["data"];
             open_inventory = inventory_data[player.chara_ids[0]]["items"];
-            chara_id = String(player.chara_ids[0]);
+            chara_id = "inventory"; //String(player.chara_ids[0]);
         }
         else if( "characterEquipment" in data.Response ) {  // components 205
             inventory_data = data.Response["characterEquipment"]["data"];
             open_inventory = inventory_data[player.chara_ids[0]]["items"];
-            chara_id = String(player.chara_ids[0]);
+            chara_id = "equipment"; //String(player.chara_ids[0]);
         }
         else if( "profileInventory" in data.Response ) {    // components 102
             inventory_data = data.Response["profileInventory"]["data"];
             open_inventory = inventory_data["items"];
-            chara_id = "100";   //for vault
+            chara_id = "vault";   //for vault
         }
         console.log(`chara_id is ${chara_id}`);
-        this.player_directory[session_id][chara_id] = {};
+        player[chara_id] = {};
+        let entry;
         for(let i = 0; i < open_inventory.length; i++)
         {
             let key = open_inventory[i]["itemHash"];
             let string_key = key.toString();
-            if(!(string_key in this.weapon_directory))
-            {
-                this.weapon_directory[string_key] = false;
-                this.player_directory[session_id][chara_id][string_key] = false;
-            }
+            if(!(string_key in this.weapon_directory)){ this.weapon_directory[string_key] = false; }
+
+            entry = false;
+            if("itemInstanceId" in open_inventory[i]) { entry = open_inventory[i]["itemInstanceId"]; }
+            player[chara_id][string_key] = entry;
         }
+        //this will finish executing on it's own time
+        this.defineWeapons(open_inventory);
         //writeToFile("weapon_directory", this.weapon_directory);
         return;
     };
+    static async defineWeapons(data) {
+        //Don't await this function. use parseGunData for immediate results
+        for(let i = 0; i < data.length; i++)
+        {
+            let key = data[i]["itemHash"];
+            if(!(key in this.weapon_directory)){ this.weapon_directory[key] = false; }
+            if(this.weapon_directory[key] == false) {
+                let gun = this.item_definitions[key];
+                this.weapon_directory[key] = this.parseGunData(gun);
+            }
+        }
+        return;
+    }
     //parse-data functions
     static parseGunData(item_data) {
         if(!(item_data) || !("hash" in item_data)){ return; } // can't be saved ATM without a hash
+        console.log("parsing");
         let itemHash = item_data["hash"];
         let itemName = false;
         let itemIcon = false;
@@ -285,22 +304,18 @@ class destiny_data {
 
     static async saveResults(data) {
         let item_data = data.Response;
-        let gun_data = parseGunData(item_data);
+        let gun_data = this.parseGunData(item_data);
+        let itemHash = gun_data["hash"];
 
         this.weapon_directory[itemHash] = gun_data;
-        printSockets(item_data);
+        //this.printSockets(item_data);
     }
     static async printResults(data) {
         let item_data = data.Response;
         if(!item_data){ console.log("Undefined item_data."); return; }
 
-        saveResults(data);
-        writeToFile("test_output", item_data);
-    };
-    static async saveManifest(data) {
-        let item_data = data.Response;
-        if(!item_data){ console.log("Undefined item_data."); return; }
-        writeToFile("test_output", item_data);
+        //this.saveResults(data);
+        await this.writeToFile("test_output", item_data);
     };
     static async printSockets(item_data) {
         let type_hash;
@@ -356,8 +371,8 @@ class destiny_data {
 
         console.log(`\n\n---itemHash: ${titan_inventory[0]["itemHash"]}---\n\n`);
 
-        //r_url = "https://www.bungie.net/platform/Destiny2/" + player["membershipType"] + "/Profile/" + player["membershipId"] + "/Item/" + titan_inventory[0]["itemInstanceId"] + "/";
-        let r_url = "https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/" + titan_inventory[0]["itemHash"] + "/";
+        let r_url = "https://www.bungie.net/platform/Destiny2/" + player["membershipType"] + "/Profile/" + player["membershipId"] + "/Item/" + titan_inventory[0]["itemInstanceId"] + "/";
+        //let r_url = "https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/" + titan_inventory[0]["itemHash"] + "/";
         
         /*create(session_id,url=r_url,api_key=api_key, {},
             printResults, "GET"

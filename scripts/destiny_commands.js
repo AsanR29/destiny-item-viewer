@@ -24,19 +24,26 @@ async function genericSaveDefinitions(data, the_dict) {
     }
     return;
 }
+async function saveManifestDefinitions(data) {
+    //await genericSaveDefinitions(data, DD.manifest_de)
+    await DD.writeToFile("default_manifest", data);
+};
 async function saveSandboxDefinitions(data) {
-    await genericSaveDefinitions(data, perk_definitions);
+    await genericSaveDefinitions(data, DD.perk_definitions);
     console.log("saved perk definitions");
 }
 async function saveLoreDefinitions(data) {
-    await genericSaveDefinitions(data, lore_directory);
+    await genericSaveDefinitions(data, DD.lore_directory);
     console.log("saved lore definitions");
 }
 async function savePlugsetDefinitions(data) {
-    await genericSaveDefinitions(data, plugset_definitions);
+    await genericSaveDefinitions(data, DD.plugset_definitions);
 }
 async function saveSockettypeDefinitions(data) {
-    await genericSaveDefinitions(data, sockettype_definitions);
+    await genericSaveDefinitions(data, DD.sockettype_definitions);
+}
+async function saveDamagetypeDefinitions(data) {
+    await genericSaveDefinitions(data, DD.damagetype_definitions);
 }
 
 
@@ -67,6 +74,7 @@ class destiny_commands {
     }
     static destiny_manifest = async function(type, id){
         console.log(`Manifest ${type} ${id}`);
+        let operation = new DestinyRequest(false, false);
         let r_url = "";
         try{
             switch (type)
@@ -83,7 +91,7 @@ class destiny_commands {
                                 if(DD.weapon_directory[key] == false){
                                     //r_url = "https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/" + key + "/";
                                     r_url = "https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/" + key + "/";
-                                    weapon_data = await DestinyRequest.create(r_url, {
+                                    weapon_data = await operation.create(r_url, {
                                         //"components":"300"
                                     },
                                         false, "GET"
@@ -94,16 +102,16 @@ class destiny_commands {
                             break;
                         case "definitions":
                             console.log("in definitions");
-                            r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinyInventoryItemDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
-                            let weapon_defs = await DestinyRequest.create(r_url, {},
+                            /*let def_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinyInventoryItemDefinition-95a3dcd4-f936-49a9-b327-83feea26c2f1.json";
+                            let weapon_defs = await operation.create(def_url, {},
                                 false, "GET"
-                            );
-                            await DD.saveWeaponDefinitions(weapon_defs);
+                            );*/
+                            await DD.saveWeaponDefinitions(DD.item_definitions);
                             break;
                         default:
                             console.log("in specific");
-                            r_url = "https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/" + id + "/";
-                            let item_definition = await DestinyRequest.create(r_url, {
+                            let spec_url = "https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/" + id + "/";
+                            let item_definition = await operation.create(spec_url, {
                                 //"components":"300"
                             },
                                 false, "GET"
@@ -118,47 +126,54 @@ class destiny_commands {
                             break;
                         case "definitions":
                             console.log("in definitions");
-                            let r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinySandboxPerkDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
-                            let sandbox_defs = await DestinyRequest.create(r_url, {},
-                                DD.saveSandboxDefinitions, "GET"
+                            let r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinySandboxPerkDefinition-95a3dcd4-f936-49a9-b327-83feea26c2f1.json";
+                            await operation.create(r_url, {},
+                                saveSandboxDefinitions, "GET"
                             );
                             break;
                     }
                     break;
                 case "lore":
                     console.log("Manifest lore?");
-                    let r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinyLoreDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
-                    let lore_defs = await DestinyRequest.create(r_url, {
+                    let lore_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinyLoreDefinition-95a3dcd4-f936-49a9-b327-83feea26c2f1.json";
+                    await operation.create(lore_url, {
                         //"components":"300"
                     },
-                        DD.saveLoreDefinitions, "GET"
+                        saveLoreDefinitions, "GET"
                     );
                     break;
                 case "plugset":
                     console.log("Manifest plugset?");
-                    r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinyPlugSetDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
-                    let plugset_defs = await DestinyRequest.create(r_url, {
+                    let plugset_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinyPlugSetDefinition-95a3dcd4-f936-49a9-b327-83feea26c2f1.json";
+                    await operation.create(plugset_url, {
                         //"components":"300"
                     },
-                        DD.savePlugsetDefinitions, "GET"
+                        savePlugsetDefinitions, "GET"
                     );
                     break;
                 case "sockettype":
                     console.log("Manifest socket types?");
-                    r_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinySocketTypeDefinition-4d61d37e-f133-44a3-a88c-2a0500303318.json";
-                    let socket_defs = await DestinyRequest.create(r_url, {
+                    let sockettype_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinySocketTypeDefinition-95a3dcd4-f936-49a9-b327-83feea26c2f1.json";
+                    await operation.create(sockettype_url, {
                         //"components":"300
                     },
-                        DD.saveSockettypeDefinitions, "GET"
+                        saveSockettypeDefinitions, "GET"
+                    );
+                    break;
+                case "damagetype":
+                    console.log("Manifest damage types?");
+                    let damagetype_url = "https://www.bungie.net/common/destiny2_content/json/en/DestinyDamageTypeDefinition-95a3dcd4-f936-49a9-b327-83feea26c2f1.json";
+                    await operation.create(damagetype_url, {},
+                        saveDamagetypeDefinitions, "GET"
                     );
                     break;
                 default:
                     console.log("Manifest default?");
-                    r_url = "https://www.bungie.net/platform/Destiny2/Manifest/";
-                    let manifest_def = await DestinyRequest.create(r_url, {
+                    let default_url = "https://www.bungie.net/platform/Destiny2/Manifest/";
+                    await operation.create(default_url, {
                         //"components":"300"
                     },
-                        DD.saveManifest, "GET"
+                        saveManifestDefinitions, "GET"
                     );
                     break;
             }
@@ -245,6 +260,7 @@ class destiny_commands {
                     DD.writeToFile("DestinyInventoryItemDefinition", DD.item_definitions); 
                     DD.writeToFile("DestinySocketTypeDefinition", DD.sockettype_definitions); 
                     DD.writeToFile("DestinyPlugSetDefinition", DD.plugset_definitions);
+                    DD.writeToFile("DestinyDamageTypeDefinition", DD.damagetype_definitions);
 
                     DD.writeToFile("weapon_directory", DD.weapon_directory);
                     DD.writeToFile("socket_directory", DD.socket_directory);

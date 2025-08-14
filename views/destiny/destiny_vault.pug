@@ -52,7 +52,7 @@ mixin gunCard(gun)
     //- var size_height = "h-32";
     -   const sizeClasses = { height: "h-14", width: "w-14", };
     div(class="flex items-center border-blue-700 border-2 bg-white shadow-lg overflow-hidden" style="width:fit-content;")
-        a(href=`/model/${gun.hash}`)
+        a(href=`/gun/${gun.hash}`)
             img(class=sizeClasses.height + " " + sizeClasses.width + " flex-shrink-0 object-cover object-center", src="https://bungie.net"+gun.icon, alt="gun's icon here")
         div(class="px-2 py-1" hidden)
             h3(class="text-sm font-semibold text-gray-800") #{gun.name}
