@@ -530,34 +530,15 @@ class destiny_weapon {
         for(let i = 0; i < categoryArray.length; i++){
             itemCategory = categoryArray[i];
             sock_set = perk_pool[itemCategory];
-            sock_set.forEach((perk_hash,v2,the_set) => {
+            //
+            for(let entry of sock_set.entries()) {
+                let perk_hash = entry[0];
                 sock = destiny_data.getSocket(perk_hash);
                 if(sock.itemTypeDesc == 'Enhanced Trait'){ return; }
                 if(!(itemCategory in this.perk_pool)){ this.perk_pool[itemCategory] = []; }
                 this.perk_pool[itemCategory].push(perk_hash);
-            });
-            /*for(let j = 0; j < sock_set.size; j++){
-                perk_hash = sock_set[j];
-                sock = destiny_data.item_definitions[perk_hash];
-                //console.log("perk_hash is: ",perk_hash,"sock is: ",sock);
-                if(sock){
-                    perk = destiny_data.parseSocketData(sock);
-                    if(perk.itemTypeDesc == 'Enhanced Trait'){ continue; }
-                    if(!(itemCategory in this.perk_pool)){ this.perk_pool[itemCategory] = []; }
-                    this.perk_pool[itemCategory].push(perk);
-                }
-                // comment this block out too tho
-                sock = destiny_data.item_definitions[sock_array[j]];
-                if(sock){
-                    perk_hash = sock["perks"]["perkHash"];
-                    //perk = destiny_data.perk_definitions[perk_hash];
-                    perk = destiny_data.parseSocketData(sock);
-                    if(perk.itemCategory){
-                        if(!(itemCategory in this.perk_pool)){ this.perk_pool[itemCategory] = []; }
-                        this.perk_pool[itemCategory].push(perk);
-                    }
-                }
-            }*/
+            }
+
             
         }
         if(this.stage == 2){ this.stage = 3 }  // stage = 3
