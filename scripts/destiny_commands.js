@@ -1,5 +1,6 @@
 // only trigger on the server's commandline
 
+const destiny_data = require("../scripts/destiny_data");
 const DD = require("../scripts/destiny_data");
 const DestinyRequest = require("../scripts/destiny_request");
 
@@ -65,7 +66,11 @@ class destiny_commands {
                 case "socket":
                     if(id && id.length != 0){
                         console.log(DD.socket_directory[id]); 
-                    } else{ console.log("categorised sockets:"); console.log(Object.keys(DD.categorised_sockets)); }
+                    } else{ 
+                        console.log("categorised sockets:"); 
+                        //console.log(Object.keys(DD.categorised_sockets)); 
+                        console.log(DD.weapon_to_socket);    
+                    }
                     break;
             }
         }
@@ -226,7 +231,32 @@ class destiny_commands {
                             break;
                         default:
                             //console.log(item_definitions[id]); 
-                            console.log(DD.item_definitions[id]["sockets"]["socketEntries"][0]);
+                            //await DD.writeToFile("test_output", DD.item_definitions[id]["sockets"]["socketEntries"]);
+                            let num = 0; let num_2 = 0;
+                            let segment = DD.item_definitions[id]["sockets"]["socketEntries"];
+                            for(let entry in segment) {
+                                if("socketTypeHash" in segment[entry]) {
+                                    let socket_type = DD.sockettype_definitions[segment[entry]["socketTypeHash"]];
+                                    await DD.writeToFile(`socket_${num}_type`, socket_type);
+                                }
+                                if("reusablePlugSetHash" in segment[entry]) {
+                                    let plugset = DD.plugset_definitions[segment[entry]["reusablePlugSetHash"]];
+                                    if(false && "reusablePlugItems" in plugset){
+                                        let plug_items = plugset["reusablePlugItems"];
+                                        num_2 = 0;
+                                        for(let plug in plug_items) {
+                                            if("plugItemHash" in plug_items[plug]){
+                                                let socket = DD.item_definitions[plug_items[plug]["plugItemHash"]];
+                                                await DD.writeToFile(`socket_${num}_${num_2}`, socket);
+                                                ++num_2;
+                                            }
+                                        }
+                                    }
+                                    
+                                    ++num;
+                                }
+                            }
+                            //console.log();
                             
                             break;
                     }
@@ -270,6 +300,24 @@ class destiny_commands {
             }
         }
         catch(err){ console.log(err); }
+        return;
+    };
+    static destiny_drop = async function(type, id){
+        console.log(`Drop ${type} ${id}\n`);
+        try {
+            switch (type)
+            {
+                case "weapon":
+                    DD.writeToFile("weapon_directory", "");
+                    break;
+                case "socket":
+                    DD.writeToFile("socket_directory", "");
+                    DD.writeToFile("weapon_to_socket", "");
+                    DD.writeToFile("socket_to_weapon", "");
+                    break;
+            }
+        }
+        catch{ console.log(`Doesn't contain id ${id}.`); }
         return;
     };
 };

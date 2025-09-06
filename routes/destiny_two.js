@@ -26,17 +26,19 @@ router.get('/loginguest', async function(req, res, next) {
         "displayName": "Nasa2907",
         "displayNameCode": "1043"
     };
-    await loginSequence(req.sessionID,guest_form);
+    let result = await loginSequence(req.sessionID,guest_form);
+    if(result !== true && "is_error" in result) { result.next_function(res); return; }
     res.redirect('/vault');
 });
 
 async function loginSequence(session_id, form_body){
     let operation = new DestinyRequest(session_id, false);
     let result_1 = await operation.loginUser(form_body);
+    if("is_error" in result_1) { return result_1; }
     let result_2 = await operation.getCharacters(result_1);
     let result_3 = await operation.getItems(result_2);
     let result_4 = await DD.getWeaponHashes(session_id, result_3);
-    console.log(DD.player_directory[session_id]);
+    //console.log(DD.player_directory[session_id]);
     return true;
 }
 router.post('/login', function(req, res, next) {
@@ -65,24 +67,31 @@ router.get('/player', function(req, res, next) {
 async function vault_call(req, res, next){
     let filter = req.params.filter;
     let inventory_data = {};
+    let gun_lookup = {};
 
     let player = DD.player_directory[req.sessionID];
     if(player){
         let vault = player.vault;
         let vault_keys = Object.keys(vault);
         let item_data = {};
-        let gun = {};
+        let gun = {}; let entry;
         for(let i = 0; i < vault_keys.length; i++){
-            if(DD.weapon_directory[vault_keys[i]] != false){ gun = DD.weapon_directory[vault_keys[i]]; }
+            entry = vault[vault_keys[i]];
+            gun = DD.weapon_directory[entry.item_hash];
+            if(!gun){ continue; }
+            if(gun.stage == 1){ gun.parseGunData(); }
+            /*if(DD.weapon_directory[vault_keys[i]] != false){ gun = DD.weapon_directory[vault_keys[i]]; }
             else{
                 item_data = DD.item_definitions[vault_keys[i]];
                 gun = DD.parseGunData(item_data);
-            }
-            inventory_data[vault_keys[i]] = gun;
+            }*/
+            //console.log(gun);
+            inventory_data[vault_keys[i]] = entry;
+            gun_lookup[entry.item_hash] = gun;
         }
     }
     if(!filter){ filter = false; }
-    res.render('destiny/destiny_vault', { title: "Your vault", vault_data: inventory_data, filter: filter} );
+    res.render('destiny/destiny_vault', { title: "Your vault", vault_data: inventory_data, gun_lookup: gun_lookup, filter: filter} );
 }
 router.get('/vault', vault_call);
 router.get('/vault/:filter', vault_call);
@@ -95,14 +104,12 @@ router.get('/sockets/:filter', function(req, res, next){
 });
 
 router.get('/gun/:gun_id', async function(req, res, next) {
-    let gun;
-    if(DD.weapon_directory[req.params.gun_id] != false) {
-        gun = DD.weapon_directory[req.params.gun_id];
-    }
-    else { 
-        let item_data = DD.item_definitions[req.params.gun_id];
-        gun = DD.parseGunData(item_data);
-    }
+    let player = DD.player_directory[req.sessionID];
+    // if(!player){ res.redirect("/login"); return; }
+    let vault = player.vault;
+    let unique = vault[req.params.gun_id];
+    let gun = DD.weapon_directory[unique.item_hash];
+
     let text = false;
     let desc = false;
     if(gun["lore"] && DD.lore_directory[gun["lore"]]){
@@ -111,61 +118,46 @@ router.get('/gun/:gun_id', async function(req, res, next) {
     else{ text = false; }
     gun["loreDesc"] = text;
 
+    // let hash = req.params.gun_id;
+    // let itemInstanceId = player.vault[hash];
 
-    let player = DD.player_directory[req.sessionID];
-    if(!player){ res.redirect("/login"); return; }
-    let hash = req.params.gun_id;
-    let itemInstanceId = player.vault[hash];
-    console.log(itemInstanceId);
-
-    let operation = new DestinyRequest(req.sessionID, false);
-    console.log(typeof itemInstanceId);
-    let instance_data = await operation.getItemInstance(itemInstanceId);
-    console.log(instance_data);
-    //await DD.printResults(instance_data);
-    let gun_sockets = [];
-    let perk_array = []; try{ perk_array = instance_data.Response.sockets.data.sockets;/*perks.data.perks;*/ } catch{ perk_array = false; }   //wow
-    let perk_hash;
-    let perk; let sock; let damageType;
-    if(perk_array){
-        for(let i = 0; i < perk_array.length; i++) {
-            //console.log(perk_array[i]);
-            perk_hash = perk_array[i]["plugHash"];//["perkHash"];
-            sock = DD.item_definitions[perk_hash];//DD.plugset_definitions[perk_hash];//DD.perk_definitions[perk_hash];
-            if(!sock){ continue; }
-            if("damageTypeHash" in sock) {
-                damageType = DD.damagetype_definitions[sock["damageTypeHash"]];
-                console.log(damageType);
-                sock = damageType;
-            }
-            if("plug" in sock) {
-                let valid_category_hashes = [1744546145,2833605196,1806783418,7906839,164955586,3809303875,1257608559,2619833294,1757026848,577918720,1202604782,2718120384,3962145884,1041766312,683359327,1697972157];
-                // this is intrinsics, barrels, magazines, frames, origins, bowstrings, arrows, scopes, batteries, stocks, tubes, magazines_gl, grips, blades, guards, hafts
-                if(!valid_category_hashes.includes(sock.plug.plugCategoryHash)) {
-                    console.log(sock.plug.plugCategoryIdentifier,sock.plug.plugCategoryHash);
-                    continue;
-                }
-            }
-            if (sock["isDisplayable"] == false){
-                continue;
-            }
-            perk = DD.parseSocketData(sock);
-            gun_sockets.push(perk);
-        }
+    if(unique.stage != 4){ 
+        let operation = new DestinyRequest(req.sessionID, false);
+        let instance_data = await operation.getItemInstance(unique.instance_hash);
+        //console.log(instance_data);
+        let perk_array = []; try{ perk_array = instance_data.Response.sockets.data.sockets; } catch{ perk_array = false; }   //wow
+        
+        await unique.parseGunUnique(perk_array); 
     }
 
-    res.render('destiny/gun_individual', { title: "Weapon Data", gun_data: gun, socket_data: gun_sockets} );
+    let perk_data = {};
+    let perk_keys = Object.keys(unique.perk_pool);
+    for(let i in perk_keys) {
+        let key = perk_keys[i];
+        //console.log(key, " of perk_pool");
+        let perk_hash = unique.perk_pool[key];
+        perk_data[key] = [DD.getSocket(perk_hash)];//DD.socket_directory[unique.perk_pool[key]];
+    }
+    //console.log(gun);
+    //console.log(unique);
+    //console.log(perk_data);
+    
+    let similiar_guns = unique.similiarGunSets();
+    s_gun_keys = Object.keys(similiar_guns);
+    for(let i in s_gun_keys) {
+        let key = s_gun_keys[i];
+        similiar_guns[key] = DD.weapon_directory[similiar_guns[key]];
+    }
+    //console.log(similiar_guns);
+    res.render('destiny/gun_individual', { title: "Weapon Data", gun_data: gun, socket_data: perk_data, similiar_guns: similiar_guns} );
 });
-router.get('/model/:gun_id', function(req, res, next) {
+router.get('/model/:gun_id', async function(req, res, next) {
     let gun;
-    if(req.params.gun_id in DD.weapon_directory && DD.weapon_directory[req.params.gun_id] != false) {
-        gun = DD.weapon_directory[req.params.gun_id];
+    if( !(req.params.gun_id in DD.weapon_directory) || DD.weapon_directory[req.params.gun_id] == false) {
+        await DD.defineWeapons([{"itemHash":req.params.gun_id}]);
     }
-    else { 
-        let item_data = DD.item_definitions[req.params.gun_id];
-        console.log(item_data);
-        gun = DD.parseGunData(item_data);
-    }
+    gun = DD.weapon_directory[req.params.gun_id];
+
     let text = false;
     let desc = false;
     if("lore" in gun && gun["lore"] && DD.lore_directory[gun["lore"]]){
@@ -177,6 +169,30 @@ router.get('/model/:gun_id', function(req, res, next) {
     let gun_sockets = [];
     let sock;
     let perk_hash; let perk;
+
+    console.log(gun.stage);
+    switch(gun.stage) {
+        case 1:
+            gun.parseGunData();
+        case 2:
+            gun.parseGunSockets();
+    }
+
+    let perk_data = {};
+    let perk_keys = Object.keys(gun.perk_pool);
+    for(let i in perk_keys) {
+        let key = perk_keys[i];
+        //console.log(key, " of perk_pool");
+        perk_data[key] = [];
+        let perk_set = gun.perk_pool[key];
+        console.log(perk_set);
+        for(let entry in perk_set) {
+            let perk_hash = perk_set[entry];
+            perk_data[key].push(DD.getSocket(perk_hash));
+        }
+       //DD.socket_directory[unique.perk_pool[key]];
+    }
+    /*
     if(req.params.gun_id in DD.weapon_to_socket) {
         for(let i = 0; i < DD.weapon_to_socket[req.params.gun_id].length; i++){
             sock = DD.item_definitions[DD.weapon_to_socket[req.params.gun_id][i]];
@@ -185,13 +201,14 @@ router.get('/model/:gun_id', function(req, res, next) {
                 perk_hash = sock["perks"]["perkHash"];
                 //perk = DD.perk_definitions[perk_hash];
                 perk = DD.parseSocketData(sock);
-                if(perk.itemCategoryHashes.includes(610365472) && !(perk.itemCategoryHashes.includes(1052191496))){
+                if(perk.itemCategory){
                     gun_sockets.push(perk);
                 }
             }
         }
-    }
-    res.render('destiny/gun_model', { title: "Weapon Data", gun_data: gun, socket_data: gun_sockets} );
+    }*/
+    console.log(perk_data);
+    res.render('destiny/gun_model', { title: "Weapon Data", gun_data: gun, socket_data: perk_data} );
 });
 
 router.get('/random', function(req, res, next) {

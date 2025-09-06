@@ -15,6 +15,7 @@ class DestinyPlayer {
         this.membershipType = false;
         this.membershipId = false;
 
+        this.weapon_uniques = {}; //weapon_directory for player instanced data
         this.vault = [];
         this.equipment = [];
         this.inventory = [];

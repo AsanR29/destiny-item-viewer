@@ -115,7 +115,11 @@ class DestinyRequest {
 
             // Check the response status
             if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}. url: ${r_url}`);
+                if(response.status == 503) {
+                    return CreateError(response.status, r_url);
+                } else {
+                    throw new Error(`HTTP error! Status: ${response.status}. url: ${r_url}`); 
+                }
             }
 
             // Parse the JSON response
@@ -128,6 +132,29 @@ class DestinyRequest {
             console.error('Error:', error);
         }
     };
+}
+
+function CreateError(code,r_url) { 
+    return errors[code].clone(r_url);
+}   // to look pretty
+class request_error {
+    constructor(code,next_function){
+        this.is_error = true;
+        this.code = code;
+        this.r_url = false;
+        this.next_function = next_function;
+    }
+    clone(r_url){
+        var new_error = new request_error(this.code,this.next_function);
+        new_error.r_url = r_url; // new attribute
+        return new_error;
+    }
+}
+const errors = {
+    503: new request_error(503,error_msg_page)  //idk
+}
+function error_msg_page(res){
+    res.render("destiny/503"); return;
 }
 
 module.exports = DestinyRequest;

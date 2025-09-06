@@ -50,6 +50,7 @@ text_command.show.execute = destiny_commands.destiny_show;
 text_command.manifest.execute = destiny_commands.destiny_manifest;
 text_command.read.execute = destiny_commands.destiny_read;
 text_command.save.execute = destiny_commands.destiny_save;
+text_command.drop.execute = destiny_commands.destiny_drop;
 //setTimeout(loop_ask, 5000);
 
 //const server = app.listen(3000, () => {
