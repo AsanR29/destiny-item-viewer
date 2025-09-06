@@ -190,11 +190,11 @@ router.get('/random', function(req, res, next) {
     res.redirect(`/model/${keys[id]}`);
 });
 
-router.post('/endpoint', function(req, res, next) {
+router.post('/endpoint', async function(req, res, next) {
     let data = req.body;
     if(data["password"] == DD.ENDPOINT_PASSWORD) {
         let cmd_tokens = data["command"];
-        Zebra.first_responder(cmd_tokens);
+        await Zebra.first_responder(cmd_tokens);
         res.render("successful"); return;
     }
     res.render("fail");
