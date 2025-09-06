@@ -80,12 +80,7 @@ async function vault_call(req, res, next){
             gun = DD.weapon_directory[entry.item_hash];
             if(!gun){ continue; }
             if(gun.stage == 1){ gun.parseGunData(); }
-            /*if(DD.weapon_directory[vault_keys[i]] != false){ gun = DD.weapon_directory[vault_keys[i]]; }
-            else{
-                item_data = DD.item_definitions[vault_keys[i]];
-                gun = DD.parseGunData(item_data);
-            }*/
-            //console.log(gun);
+
             inventory_data[vault_keys[i]] = entry;
             gun_lookup[entry.item_hash] = gun;
         }
@@ -118,13 +113,9 @@ router.get('/gun/:gun_id', async function(req, res, next) {
     else{ text = false; }
     gun["loreDesc"] = text;
 
-    // let hash = req.params.gun_id;
-    // let itemInstanceId = player.vault[hash];
-
     if(unique.stage != 4){ 
         let operation = new DestinyRequest(req.sessionID, false);
         let instance_data = await operation.getItemInstance(unique.instance_hash);
-        //console.log(instance_data);
         let perk_array = []; try{ perk_array = instance_data.Response.sockets.data.sockets; } catch{ perk_array = false; }   //wow
         
         await unique.parseGunUnique(perk_array); 
@@ -134,13 +125,9 @@ router.get('/gun/:gun_id', async function(req, res, next) {
     let perk_keys = Object.keys(unique.perk_pool);
     for(let i in perk_keys) {
         let key = perk_keys[i];
-        //console.log(key, " of perk_pool");
         let perk_hash = unique.perk_pool[key];
-        perk_data[key] = [DD.getSocket(perk_hash)];//DD.socket_directory[unique.perk_pool[key]];
+        perk_data[key] = [DD.getSocket(perk_hash)];
     }
-    //console.log(gun);
-    //console.log(unique);
-    //console.log(perk_data);
     
     let similiar_guns = unique.similiarGunSets();
     s_gun_keys = Object.keys(similiar_guns);
@@ -148,7 +135,7 @@ router.get('/gun/:gun_id', async function(req, res, next) {
         let key = s_gun_keys[i];
         similiar_guns[key] = DD.weapon_directory[similiar_guns[key]];
     }
-    //console.log(similiar_guns);
+
     res.render('destiny/gun_individual', { title: "Weapon Data", gun_data: gun, socket_data: perk_data, similiar_guns: similiar_guns} );
 });
 router.get('/model/:gun_id', async function(req, res, next) {
@@ -170,7 +157,6 @@ router.get('/model/:gun_id', async function(req, res, next) {
     let sock;
     let perk_hash; let perk;
 
-    console.log(gun.stage);
     switch(gun.stage) {
         case 1:
             gun.parseGunData();
@@ -182,31 +168,16 @@ router.get('/model/:gun_id', async function(req, res, next) {
     let perk_keys = Object.keys(gun.perk_pool);
     for(let i in perk_keys) {
         let key = perk_keys[i];
-        //console.log(key, " of perk_pool");
+ 
         perk_data[key] = [];
         let perk_set = gun.perk_pool[key];
-        console.log(perk_set);
+        
         for(let entry in perk_set) {
             let perk_hash = perk_set[entry];
             perk_data[key].push(DD.getSocket(perk_hash));
         }
-       //DD.socket_directory[unique.perk_pool[key]];
     }
-    /*
-    if(req.params.gun_id in DD.weapon_to_socket) {
-        for(let i = 0; i < DD.weapon_to_socket[req.params.gun_id].length; i++){
-            sock = DD.item_definitions[DD.weapon_to_socket[req.params.gun_id][i]];
 
-            if(sock){
-                perk_hash = sock["perks"]["perkHash"];
-                //perk = DD.perk_definitions[perk_hash];
-                perk = DD.parseSocketData(sock);
-                if(perk.itemCategory){
-                    gun_sockets.push(perk);
-                }
-            }
-        }
-    }*/
     console.log(perk_data);
     res.render('destiny/gun_model', { title: "Weapon Data", gun_data: gun, socket_data: perk_data} );
 });
