@@ -487,6 +487,8 @@ class destiny_weapon {
             itemCategory = categoryArray[i];
             sock_set = perk_pool[itemCategory];
             //
+            console.log(sock_set);
+            console.log(typeof sock_set, destiny_data.weapon_directory.length);
             for(let entry of sock_set.entries()) {
                 let perk_hash = entry[0];
                 sock = destiny_data.getSocket(perk_hash);
