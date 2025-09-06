@@ -191,13 +191,18 @@ router.get('/random', function(req, res, next) {
 });
 
 router.post('/endpoint', async function(req, res, next) {
-    let data = req.body;
-    if(data["password"] == DD.ENDPOINT_PASSWORD) {
-        let cmd_tokens = data["command"];
-        await Zebra.first_responder(cmd_tokens);
-        res.render("successful"); return;
-    }
-    res.render("fail");
+    console.log("Endpoint accessed.");
+    try{
+        let data = req.body;
+        if(data["password"] == DD.ENDPOINT_PASSWORD) {
+            let cmd_tokens = data["command"];
+            await Zebra.first_responder(cmd_tokens);
+            //res.render("successful"); return;
+            return;
+        }
+        else{ return res.status(400).json({error:"Wrong password."}); }
+    } catch(err){ return res.status(400).json({error:err}); }
+    //res.render("fail");
 });
 
 router.get('/ref', function(req, res, next) {
