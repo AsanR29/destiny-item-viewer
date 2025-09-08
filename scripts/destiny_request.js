@@ -5,6 +5,65 @@ const DD = require("../scripts/destiny_data");
 const DestinyPlayer = require("./destiny_player");
 
 class DestinyRequest {
+    static BUNGIE_ENDPOINTS = { 
+        "Manifest" : "https://www.bungie.net/platform/Destiny2/Manifest/" 
+        //item_definitions : 
+        //
+    };
+    static async fetchManifest() {
+        let r_url = this.BUNGIE_ENDPOINTS["Manifest"];
+        let manifest_opp = new DestinyRequest(false,false);
+        let result = await manifest_opp.create(r_url,{},
+            false, "GET"
+        );
+        let manifest_data = result.Response["jsonWorldComponentContentPaths"]["en"];
+        DD.writeToFile("default_manifest",manifest_data);   //happening async
+        // each one
+        let endpoint_names = Object.keys(manifest_data);
+        for(let i = 0; i < endpoint_names.length; i++) {
+            this.BUNGIE_ENDPOINTS[endpoint_names[i]] = manifest_data[endpoint_names[i]];
+        }   // like "DestinyLoreDefinition" : "/common/url+?%randomlygeneratedhash.json"
+
+        let prefix = "https://www.bungie.net";
+
+        // this can all happen async tbh
+        let lore_opp = new DestinyRequest(false, {"target":DD.lore_directory});
+        lore_opp.create(
+            prefix+this.BUNGIE_ENDPOINTS["DestinyLoreDefinition"],{},
+            lore_opp.genericSaveDefinitions.bind(lore_opp), "GET"
+        ).then(DD.writeToFile("DestinyLoreDefinition",DD.lore_directory));
+
+        let item_opp = new DestinyRequest(false, {"target":DD.item_definitions});
+        item_opp.create(
+            prefix+this.BUNGIE_ENDPOINTS["DestinyInventoryItemDefinition"],{},
+            item_opp.genericSaveDefinitions.bind(item_opp), "GET"
+        ).then(DD.writeToFile("DestinyInventoryItemDefinition",DD.item_definitions));
+
+        let sandbox_opp = new DestinyRequest(false, {"target":DD.perk_definitions});
+            sandbox_opp.create(
+            prefix+this.BUNGIE_ENDPOINTS["DestinySandboxPerkDefinition"],{},
+            sandbox_opp.genericSaveDefinitions.bind(sandbox_opp), "GET"
+        ).then(DD.writeToFile("DestinySandboxPerkDefinition",DD.perk_definitions));
+
+        let socket_opp = new DestinyRequest(false, {"target":DD.sockettype_definitions});
+        socket_opp.create(
+            prefix+this.BUNGIE_ENDPOINTS["DestinySocketTypeDefinition"],{},
+            socket_opp.genericSaveDefinitions.bind(socket_opp), "GET"
+        ).then(DD.writeToFile("DestinySocketTypeDefinition",DD.sockettype_definitions));
+
+        let plugset_opp = new DestinyRequest(false, {"target":DD.plugset_definitions});
+        plugset_opp.create(
+            prefix+this.BUNGIE_ENDPOINTS["DestinyPlugSetDefinition"],{},
+            plugset_opp.genericSaveDefinitions.bind(plugset_opp), "GET"
+        ).then(DD.writeToFile("DestinyPlugSetDefinition",DD.plugset_definitions));
+
+        let damagetype_opp = new DestinyRequest(false, {"target":DD.damagetype_definitions});
+        damagetype_opp.create(
+            prefix+this.BUNGIE_ENDPOINTS["DestinyDamageTypeDefinition"],{},
+            damagetype_opp.genericSaveDefinitions.bind(damagetype_opp), "GET"
+        ).then(DD.writeToFile("DestinyDamageTypeDefinition",DD.damagetype_definitions));
+
+    }
     constructor(SESSION_ID, data) { 
         this.session_id = SESSION_ID;
         //this.API_KEY = API_KEY;
@@ -115,6 +174,27 @@ class DestinyRequest {
             console.error('Error:', error);
         }
     };
+    // doesn't use create. Is ONLY a response to create
+    async genericSaveDefinitions(def_data, the_dict=false) {
+        if("Response" in def_data){ def_data = def_data.Response; }
+        if(the_dict == false){ 
+            try{ the_dict = this.data["target"]; } catch{ 
+            console.log("Failed to identify dict to save definitions in."); 
+            return false; } }
+
+        let def_keys = Object.keys(def_data);
+        let entry, string_key;
+        for(let i =0; i < def_keys.length; i++)
+        {
+            entry = def_data[def_keys[i]];
+            string_key = def_keys[i].toString();
+            if(!(string_key in the_dict))
+            {
+                the_dict[string_key] = entry;
+            }
+        }
+        return;
+    }
 }
 
 function CreateError(code,r_url) { 

@@ -38,7 +38,7 @@ class destiny_data {
     static async loadAllFiles(){
         // load saved lore data
         let load_result = false;
-        try { load_result = await this.loadFromFile("lore_directory", this.lore_directory); }
+        try { load_result = await this.loadFromFile("DestinyLoreDefinition", this.lore_directory); }
         catch { console.log("Error while loading lore_directory."); }
         // etc
         try { await this.loadFromFile("socket_to_weapon", this.socket_to_weapon); }
@@ -73,14 +73,6 @@ class destiny_data {
         try{ await this.loadFromFile("weapon_directory", this.weapon_directory); }
         catch { console.log("Error while loading weapon_directory."); }
         
-        if(process.env.DOWNLOAD == 1) {
-            destiny_commands.destiny_manifest("lore",[""]);
-            destiny_commands.destiny_manifest("weapon",["definitions"]);
-            destiny_commands.destiny_manifest("sockettype",[""]);
-            destiny_commands.destiny_manifest("socket",["definitions"]);
-            destiny_commands.destiny_manifest("plugset",[""]);
-            destiny_commands.destiny_manifest("damagetype",[""]);
-        }
     };
     static async loadFromFile(file_name, target_dict) {
         let val = false;
@@ -598,6 +590,6 @@ let folder_path = path.resolve(destiny_data.render_filepath, "static_data");
 if (!fs.existsSync(folder_path)) {
     fs.mkdirSync(folder_path, true); // recursive = true
 }
-destiny_data.loadAllFiles();
+//destiny_data.loadAllFiles();
 
 module.exports = destiny_data;
