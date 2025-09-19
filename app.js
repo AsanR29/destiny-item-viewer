@@ -6,14 +6,17 @@ var session = require('express-session');
 var flash = require('express-flash');
 
 const {Zebra, text_command} = require('./scripts/cmd_multitool');
-var homeRouter = require('./routes/home');
+
 const destiny_req = require('./routes/destiny_two');
-//console.log("destiny_req: ",destiny_req);
 var destinyRouter = destiny_req.router;
-//console.log("destinyRouter: ", destinyRouter);
+
+const admin_req = require('./routes/admin_portal');
+var adminRouter = admin_req.router;
+
+
 var destiny_data = require('./scripts/destiny_data');
 var destiny_request = require('./scripts/destiny_request');
-var destiny_commands = require('./scripts/destiny_commands'); //destiny_req.destiny_commands;
+var destiny_commands = require('./scripts/destiny_commands');
 //idk why it won't let me use the {router, destiny_commands} syntax. mysterious error.
 
 const app = express();
@@ -37,7 +40,7 @@ app.use(express.static(path.join(__dirname, 'public')))
 
 //app.use('/', homeRouter);
 app.use('/', destinyRouter);
-
+app.use('/', adminRouter);
 
 async function loop_ask()
 {
@@ -58,12 +61,14 @@ text_command.drop.execute = destiny_commands.destiny_drop;
 //const server = app.listen(3000, () => {
 //    console.log(`The application started on port ${server.address().port}`);
 //});
-async function startup_sequence() {
+(async () => {
     await destiny_data.loadAllFiles();
     if(process.env.DOWNLOAD == 1){
-        destiny_request.fetchManifest();
+        await destiny_request.fetchManifest();
     }
-}
-startup_sequence();
+    if(process.env.SAVE_STATIC == 1){
+        await destiny_commands.destiny_save("everything","");
+    }
+})();
 
 module.exports = app;

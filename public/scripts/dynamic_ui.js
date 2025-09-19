@@ -1,3 +1,18 @@
+function togglePasswordSection() {
+    let input_element = document.getElementById("password_input");
+    if(input_element.classList.contains("form_login_input")){ 
+        input_element.classList.remove("form_login_input");
+        input_element.classList.add("form_login_input_unavailable");
+        input_element.value = "";
+        input_element.readOnly = true;
+    } else {
+        input_element.classList.remove("form_login_input_unavailable");
+        input_element.classList.add("form_login_input");
+        input_element.readOnly = false;
+    }
+    return;
+}
+
 function ShowHover(element) {
     setTimeout(() => {
         if(element.matches(":hover")) {

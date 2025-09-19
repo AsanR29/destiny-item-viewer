@@ -1,4 +1,5 @@
-var express = require('express');
+const express = require('express');
+const session = require('express-session');
 const mongoose = require('mongoose');
 var router = express.Router();
 
@@ -11,7 +12,7 @@ const DD = require("../scripts/destiny_data");
 const DestinyRequest = require("../scripts/destiny_request");
 const {Zebra, text_command}  = require("../scripts/cmd_multitool");
 
-const DestinyPlayer = require("../scripts/destiny_player");
+const {DestinyPlayer,PlayerSession} = require("../scripts/destiny_player");
 
 //routes
 router.get('/',  function(req, res, next) {
@@ -19,52 +20,101 @@ router.get('/',  function(req, res, next) {
 });
 
 router.get('/login', function(req, res, next) {
-    res.render('destiny/destiny_login', { title: "Bungie Account Details" } );
+    res.render('destiny/destiny_login', { title: "Bungie Account", form_type:'Log in' } );
 });
 router.get('/loginguest', async function(req, res, next) {
     let guest_form = {  // My account.
         "displayName": "Nasa2907",
         "displayNameCode": "1043"
     };
-    let result = await loginSequence(req.sessionID,guest_form);
-    if(result !== true && "is_error" in result) { result.next_function(res); return; }
-    res.redirect('/vault');
+    let result = await loginSequence(req, res, guest_form, "login");
+    if(result != true && "is_error" in result) { result.next_function(res); return; }
+    //res.redirect('/vault');
 });
 
-async function loginSequence(session_id, form_body){
+async function loginSequence(req, res, form_body, type) {
+    let session_id = req.sessionID;
     let operation = new DestinyRequest(session_id, false);
+    operation.run_info["type"] = type;
     let result_1 = await operation.loginUser(form_body);
-    if("is_error" in result_1) { return result_1; }
-    let result_2 = await operation.getCharacters(result_1);
-    let result_3 = await operation.getItems(result_2);
-    let result_4 = await DD.getWeaponHashes(session_id, result_3);
-    //console.log(DD.player_directory[session_id]);
-    return true;
-}
-router.post('/login', function(req, res, next) {
-    if(req){
-        loginSequence(req.sessionID, req.body)
-            .then(function(){
-                req.flash("info", "Logged in");
-                res.redirect('/vault'); // later make it /player
-            })
-            .catch(function(){
-                req.flash("warning", "Failed to log in");
-                res.redirect('/login');
-                return;
-            });
+    if(!result_1 || "is_error" in result_1) { 
+        switch(type){
+            case "login": res.redirect('/login'); break
+            case "signup": res.redirect('/signup'); break;
+        }
+        req.flash("warning", "Failed to log in");
+        return false;
     }
-    else{
-        console.log("Hell");
-        res.redirect('/login');
+    req.session.player = new PlayerSession(req.body.displayName,req.body.displayNameCode,req.body.password);
+    req.session.save();
+
+    let result_2 = await operation.authenticate_1(res,session_id);  //this contains a res.redirect
+    return result_2;
+};
+
+router.post('/login', function(req, res, next) {
+    loginSequence(req, res, req.body, "login");
+    return;
+});
+router.get('/signup', function(req, res, next) {
+    res.render('destiny/destiny_login', { title: "Bungie Account", form_type:'Sign up' } );
+});
+router.post('/signup', async function(req, res, next) {
+    loginSequence(req, res, req.body, "signup");
+    return;
+});
+router.get('/authenticate', async function(req,res,next) {
+    let operation;
+    try{
+        operation = DD.auth_processes[req.sessionID];
+        let result_1 = await operation.authenticate_2(req.query);
+        
+        if(result_1 == false || "is_error" in result_1) { 
+            res.redirect('/login');
+            req.flash("warning", "Failed to log in");
+            return;
+        }
+        let player = DD.player_directory[req.sessionID];
+        let result_2 = false;
+        switch(operation.run_info["type"]) {
+            case "login":
+                result_2 = await player.login(req.session.player);
+                if(result_2 == false){ res.redirect('/login'); }
+                break;
+            case "signup":
+                result_2 = await player.signup(req.session.player);
+                if(result_2 == false){ res.redirect('/signup'); }
+                break;
+        }
+        if(result_2 == false){ return; }
+        
+        //
+        let result_3 = await operation.getCharacters();
+        let result_4 = await operation.getItems(result_3);
+        let result_5 = await DD.getWeaponHashes(req.sessionID, result_4);
+        req.session.save(); //player.login / player.signup make changes to it
+
+        res.redirect('/vault'); // later make it /player
+        req.flash("info", "Logged in");
+    } catch(err) { 
+        console.log(err);
+        res.render('destiny/destiny_homepage', { title: "Authentication FAIL!", unique_users: 3 } );
+    } finally {
+        if(req.sessionID in DD.auth_processes) {
+            delete DD.auth_processes[req.sessionID];
+        }
+        return;
     }
 });
 
 router.get('/player', function(req, res, next) {
-    res.render('destiny/destiny_player', { title: "Your Account"} );
+    res.render('destiny/destiny_player', { title: "Your Account" } );
 });
 
 async function vault_call(req, res, next){
+    if( !(req.session.player && req.session.player.logged_in) ){
+        res.redirect('/login'); return;
+    } //else: they're logged_in
     let filter = req.params.filter;
     let inventory_data = {};
     let gun_lookup = {};
@@ -99,8 +149,11 @@ router.get('/sockets/:filter', function(req, res, next){
 });
 
 router.get('/gun/:gun_id', async function(req, res, next) {
+    if( !(req.session.player && req.session.player.logged_in) ){
+        res.redirect('/login'); return;
+    } //else: they're logged_in
     let player = DD.player_directory[req.sessionID];
-    // if(!player){ res.redirect("/login"); return; }
+
     let vault = player.vault;
     let unique = vault[req.params.gun_id];
     let gun = DD.weapon_directory[unique.item_hash];
@@ -178,7 +231,6 @@ router.get('/model/:gun_id', async function(req, res, next) {
         }
     }
 
-    console.log(perk_data);
     res.render('destiny/gun_model', { title: "Weapon Data", gun_data: gun, socket_data: perk_data} );
 });
 
@@ -188,21 +240,6 @@ router.get('/random', function(req, res, next) {
     let id = Math.floor(Math.random() * max);
     
     res.redirect(`/model/${keys[id]}`);
-});
-
-router.post('/endpoint', async function(req, res, next) {
-    console.log("Endpoint accessed.");
-    try{
-        let data = req.body;
-        if(data["password"] == DD.ENDPOINT_PASSWORD) {
-            let cmd_tokens = data["command"];
-            await Zebra.first_responder(cmd_tokens);
-            //res.render("successful"); return;
-            return;
-        }
-        else{ return res.status(400).json({error:"Wrong password."}); }
-    } catch(err){ return res.status(400).json({error:err}); }
-    //res.render("fail");
 });
 
 router.get('/ref', function(req, res, next) {

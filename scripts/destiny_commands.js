@@ -1,16 +1,7 @@
 // only trigger on the server's commandline
 
-const destiny_data = require("../scripts/destiny_data");
 const DD = require("../scripts/destiny_data");
 const DestinyRequest = require("../scripts/destiny_request");
-
-async function save_data_command(){
-    await destiny_commands.destiny_save("everything","");
-    console.log("saved all (command)");
-}
-if(process.env.SAVE_STATIC == 1){
-    setTimeout(save_data_command,600000);   //10 minutes
-}
 
 class destiny_commands {
     static destiny_show = async function(target, id){
@@ -90,12 +81,12 @@ class destiny_commands {
             switch (type)
             {
                 case "weapon":
-                    DD.writeToFile("weapon_directory", "");
+                    DD.writeToFile("weapon_directory", {});
                     break;
                 case "socket":
-                    DD.writeToFile("socket_directory", "");
-                    DD.writeToFile("weapon_to_socket", "");
-                    DD.writeToFile("socket_to_weapon", "");
+                    DD.writeToFile("socket_directory", {});
+                    DD.writeToFile("weapon_to_socket", {});
+                    DD.writeToFile("socket_to_weapon", {});
                     break;
             }
         }
