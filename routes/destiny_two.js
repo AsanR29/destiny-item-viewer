@@ -63,7 +63,10 @@ router.post('/signup', async function(req, res, next) {
     loginSequence(req, res, req.body, "signup");
     return;
 });
-router.get('/authenticate', async function(req,res,next) {
+
+router.get('/authenticate', authenticate_call);
+
+async function authenticate_call(req,res,next) {
     let operation;
     try{
         operation = DD.auth_processes[req.sessionID];
@@ -105,7 +108,7 @@ router.get('/authenticate', async function(req,res,next) {
         }
         return;
     }
-});
+};
 
 router.get('/player', function(req, res, next) {
     res.render('destiny/destiny_player', { title: "Your Account" } );

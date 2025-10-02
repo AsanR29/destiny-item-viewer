@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "node ./bin/www",
-    "buildpost": "postcss ./public/styles/homestyle.css -o ./public/build/homestyle.css"
+    "build": "postcss ./public/styles/homestyle.css -o ./public/build/homestyle.css"
   },
   "engines": {
     "node": "^v20.13.1"
