@@ -16,11 +16,14 @@
     "flash-messages": "^0.0.4",
     "mongoose": "^8.8.2",
     "pg": "^8.16.3",
-    "postcss": "^8.5.6",
     "pug": "^3.0.3",
     "socket.io": "^4.8.1",
     "tailwindcss": "^3.4.15",
     "typescript": "^5.8.3",
     "vite": "^5.4.11"
+  },
+  "devDependencies": {
+    "postcss": "^8.5.6",
+    "postcss-cli": "^11.0.1"
   }
 }
