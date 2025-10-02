@@ -1,6 +1,4 @@
-/dist/build
 .env
-bin/www
 /node_modules
-/public/build
 /static_data
+/public/build/homestyle.css

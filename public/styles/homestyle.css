@@ -71,6 +71,10 @@ body{
     white-space: pre-wrap;
 }
 
+.form_login_input_unavailable {
+    background-image: repeating-linear-gradient(-45deg, #d5d7db 0px 1px, transparent 1px 10px);
+}
+
 @layer components {
     .btn {
         @apply inline-block px-5 py-3 rounded-lg shadow-lg 
@@ -87,5 +91,15 @@ body{
     }
     .link {
         @apply hover:underline
+    }
+
+    .form_login_label {
+        @apply block text-sm font-medium text-gray-700
+    }
+    .form_login_input {
+        @apply mt-1 block w-full border bg-gray-200 border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500
+    }
+    .form_login_input_unavailable {
+        @apply mt-1 block w-full border bg-gray-200 border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500
     }
 }

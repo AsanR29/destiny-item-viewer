@@ -17,12 +17,19 @@ block content
                 div.pl-10.pr-10
                     div.p-2(class="size-fit")
                         h1.text-white.text-4xl.font-bold #{gun_data["name"]}
-                    div(class="flex h-min")
+                    div(class=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6")
                         each socket_key in Object.keys(socket_data)
                             - let socket_pool = socket_data[socket_key];
-                            div.grid.grid-cols-1
-                                each socket in socket_pool
-                                    +socketSmall(socket)
+                            each socket in socket_pool
+                                +socketSmall(socket)
+                    div(class="flex")
+                        ul
+                            each rating in Object.keys(similiar_guns)
+                                - let item = similiar_guns[rating];
+                                li 
+                                    +similiarGunCard(item,rating)
+                            
+
 
         div(class="w-1/2 bg-gray-400 flex items-center justify-center relative")
             div(class="absolute inset-0" style="z-index:0;")
@@ -35,15 +42,13 @@ block content
                 //- Grid Container
                 div(class=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6")
                     +loopSocketData(socket_data)
-                    // each socket_key in Object.keys(socket_data)
-                    //    - let socket_pool = socket_data[socket_key];
-                    //    div.grid.grid-cols-1
-                    //        each socket in socket_pool
-                    //            +socketCard(socket_data)
-
+                            
+                div.bg-gray-800.min-w-fit(class="max-w-20 max-h-10")
+                    a.text-gray-500.text-4xl(href="/model/"+gun_data["item_hash"]) Weapon Overview
 
 
 mixin socketCard(socket)
+    //- var size_height = "h-32";
     -   const sizeClasses = { height: "h-14", width: "w-14", };
     div(class="items-center rounded-lg bg-slate-400 shadow-lg overflow-hidden" style="width:fit-content;")
         img(class="flex-shrink-0 object-cover object-center", style=`height:${sizeClasses.height}px;width:${sizeClasses.width}px;`, src="https://bungie.net"+socket.icon, alt="socket's icon here")
@@ -51,7 +56,7 @@ mixin socketCard(socket)
             h3(class="text-sm font-semibold text-gray-800") #{socket["name"]}
 mixin socketSmall(socket)
     -   const sizeClasses = { height: "h-10", width: "w-10", };
-    div(class="items-center rounded-lg bg-slate-400 shadow-lg overflow-hidden" style="width:fit-content;height:fit-content")
+    div(class="items-center rounded-lg bg-slate-400 shadow-lg overflow-hidden" style="width:fit-content;")
         img(class="flex-shrink-0 object-cover object-center", style=`height:${sizeClasses.height}px;width:${sizeClasses.width}px;`, src="https://bungie.net"+socket.small_icon, alt="icon")
 
 mixin loopSocketData(socket_data)
@@ -59,5 +64,19 @@ mixin loopSocketData(socket_data)
     each key in socket_keys
         - let socket_pool = socket_data[key];
         each socket in socket_pool
-            div.grid.grid-cols-1
-                +socketCard(socket)
+            +socketCard(socket)
+
+
+mixin similiarGunCard(gun,rating)
+    //- var size_height = "h-32";
+    -   const sizeClasses = { height: "h-14", width: "w-14", };
+    div(class="items-center border-blue-700 border-2 bg-slate-400 shadow-lg max-w-full max-h-full" style="width:fit-content;")
+        a(href=`/model/${gun.item_hash}`)
+            img(class=sizeClasses.height + " " + sizeClasses.width + " flex-shrink-0 object-cover object-center", src="https://bungie.net"+gun.icon, alt="gun's icon here")
+        div(class="px-2 py-1" style="")
+            h3(class="text-sm font-semibold text-gray-800") #{gun.name}
+            p(class="text-gray-600") #{gun.description}
+            div(class="mt-1")
+                a(href="/vault/"+gun.itemType, class="text-indigo-600 hover:text-indigo-500 font-semibold text-sm") #{gun.itemTypeDesc}
+                label(class="ml-5 text-indigo-600 font-semibold text-sim") #{gun.itemType}
+                label(class="ml-5 text-green-300 font-semibold text-sim") Similiarity: #{Math.round(rating*100)}%
