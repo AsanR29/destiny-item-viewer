@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "/styles/positional.css";
+@import "/styles/file-with-color.css";
 
 :root{
     --shadowarea-height: 0px;

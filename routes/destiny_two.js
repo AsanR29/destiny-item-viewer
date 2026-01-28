@@ -27,9 +27,10 @@ router.get('/loginguest', async function(req, res, next) {
         "displayName": "Nasa2907",
         "displayNameCode": "1043"
     };
-    let result = await loginSequence(req, res, guest_form, "login");
-    if(result != true && "is_error" in result) { result.next_function(res); return; }
-    //res.redirect('/vault');
+    let result = await loginSequence(req, res, guest_form, "loginguest");
+    //if(result != true && "is_error" in result) { result.next_function(res); return; }
+    res.redirect('/vault');
+    req.flash("info", "Logged in");
 });
 
 async function loginSequence(req, res, form_body, type) {
@@ -40,7 +41,7 @@ async function loginSequence(req, res, form_body, type) {
     if(!result_1 || "is_error" in result_1) { 
         switch(type){
             case "login": res.redirect('/login'); break
-            case "signup": res.redirect('/signup'); break;
+            case "signup": case "loginguest": res.redirect('/signup'); break;
         }
         req.flash("warning", "Failed to log in");
         return false;
@@ -48,8 +49,19 @@ async function loginSequence(req, res, form_body, type) {
     req.session.player = new PlayerSession(req.body.displayName,req.body.displayNameCode,req.body.password);
     req.session.save();
 
-    let result_2 = await operation.authenticate_1(res,session_id);  //this contains a res.redirect
-    return result_2;
+    if(type != "loginguest"){ 
+        let result_2 = await operation.authenticate_1(res,session_id);  //this contains a res.redirect
+        return result_2;
+    }
+    else{ 
+        //
+        req.session.player.is_guest = true;
+        let result_3 = await operation.getCharacters();
+        let result_4 = await operation.getItems(result_3);
+        let result_5 = await DD.getWeaponHashes(req.sessionID, result_4);
+        req.session.save(); //player.login / player.signup make changes to it
+    }
+    return true;
 };
 
 router.post('/login', function(req, res, next) {
@@ -115,7 +127,7 @@ router.get('/player', function(req, res, next) {
 });
 
 async function vault_call(req, res, next){
-    if( !(req.session.player && req.session.player.logged_in) ){
+    if( !(req.session.player && (req.session.player.logged_in || req.session.player.is_guest) ) ){
         res.redirect('/login'); return;
     } //else: they're logged_in
     let filter = req.params.filter;
@@ -152,7 +164,7 @@ router.get('/sockets/:filter', function(req, res, next){
 });
 
 router.get('/gun/:gun_id', async function(req, res, next) {
-    if( !(req.session.player && req.session.player.logged_in) ){
+    if( !(req.session.player && (req.session.player.logged_in || req.session.player.is_guest) ) ){
         res.redirect('/login'); return;
     } //else: they're logged_in
     let player = DD.player_directory[req.sessionID];

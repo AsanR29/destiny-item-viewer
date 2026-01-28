@@ -447,7 +447,7 @@ class destiny_weapon {
         
         if(!(this.item_hash in destiny_data.weapon_to_socket)) {
             let all_sockets = destiny_data.item_definitions[this.item_hash];
-            if( !("sockets" in all_sockets && "socketEntries" in all_sockets["sockets"])){ return false; }
+            if( !(all_sockets && "sockets" in all_sockets && "socketEntries" in all_sockets["sockets"])){ return false; }
             all_sockets = all_sockets["sockets"]["socketEntries"];
             destiny_data.writeToFile("test_sockets",all_sockets);
 

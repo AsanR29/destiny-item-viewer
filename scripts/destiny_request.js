@@ -1,6 +1,11 @@
 var http = require('http');
 const { URLSearchParams } = require('url');
-const auth = require('auth0-js');
+
+
+const auth = require('auth0');
+//import auth from "auth0-js";
+
+
 const crypto = require('node:crypto');
 
 const DD = require("../scripts/destiny_data");

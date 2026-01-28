@@ -10,10 +10,11 @@ const server_credentials = {
 const database_credentials = { database: process.env.PG_DATABASE };
 Object.assign(database_credentials, server_credentials);
 
-const server_pool = new Pool(server_credentials);
-const database_pool = new Pool(database_credentials);
+const server_pool = new Pool(server_credentials,idleTimeoutMillis=10000);
+const database_pool = new Pool(database_credentials,idleTimeoutMillis=10000);
 
 const fs = require('node:fs');
+//const server = require("../socket_connection");
 
 var table_commands = {};
 try{
@@ -36,7 +37,7 @@ try{
         startup_client = await database_pool.connect();
     }
 
-    
+    //startup_client.release(); return;
     try{
         /*const {rows} = await startup_client.query("SELECT current_user");
         const currentUser = rows[0]["current_user"];

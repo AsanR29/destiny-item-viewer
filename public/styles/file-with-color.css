@@ -1,0 +1,56 @@
+
+
+/*  Friggin bg colors   */
+.bg-grey-100{
+    background-color: rgb(243 244 246) /* #f3f4f6 */;
+}
+.bg-grey-50{
+    background-color: rgb(249 250 251) /* #f9fafb */;
+}
+.bg-blue-600{
+    background-color: rgb(37 99 235) /* #2563eb */;
+}
+.bg-white{
+    background-color: rgb(255 255 255);
+}
+
+/*  Friggn background hover colors  */
+.bg-white-hover:hover{
+    background-color: rgb(255 255 255);
+}
+
+/*  Friggin text colors */
+.t-grey-900{
+    color: rgb(17 24 39) /* #111827 */;
+}
+.t-grey-600{
+    color: rgb(75 85 99) /* #4b5563 */;
+}
+.t-grey-500 {
+    color: rgb(107 114 128) /* #6b7280 */;
+}
+.t-black{
+    color: rgb(0 0 0) /* #000000 */;
+}
+.t-cyan-400{
+    color: rgb(34 211 238) /* #22d3ee */;
+}
+.t-blue-600{
+    color: rgb(37 99 235) /* #2563eb */;
+}
+
+
+/*  Friggin text hover colors   */
+.t-blue-600-hover:hover{
+    color: rgb(37 99 235) /* #2563eb */;
+}
+
+/*  Friggin border colors   */
+.bd-white{
+    border-color: rgb(255 255 255);
+}
+
+/*  Friggin evil concepts humanity would be better off without  */
+.shadow{
+    box-shadow: 0em 1em 1em rgb(255 255 255 / 60%);
+}
