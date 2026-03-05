@@ -1,18 +1,19 @@
 // only trigger on the server's commandline
 
 const DD = require("../scripts/destiny_data");
+const DestinySQL = require("./destiny_sql");
 const DestinyRequest = require("../scripts/destiny_request");
 
 class destiny_commands {
     static destiny_show = async function(target, id){
         console.log(`Show ${target} ${id}\n`);
+        id = String(id);
         try {
             switch (target)
             {
                 case "weapon":
-                    console.log(`condition tests: ${id == true}, ${id == false}, ${id != null}, ${id.length}, ${id}.}`);
-                    console.log("final test: ", (id && id.length == 0));
                     if(id && id.length != 0){
+                        console.log(DD.item_definitions[id]);
                         console.log(DD.weapon_directory[id]); 
                     } else{ console.log("categorised guns:"); console.log(DD.categorised_guns); }
                     break;
@@ -33,6 +34,14 @@ class destiny_commands {
     }
     static destiny_manifest = async function(type, id){
         console.log(`Manifest ${type} ${id}`);
+        try {
+            switch(type){
+                case "everything":
+                    await DestinyRequest.fetchManifest();
+                    break;
+            }
+        }
+        catch{ console.log(`Error trying to Manifest.`); }
         return;
     };
     static destiny_read = async function(type, id){
@@ -93,6 +102,18 @@ class destiny_commands {
         catch{ console.log(`Doesn't contain id ${id}.`); }
         return;
     };
+    static destiny_create = async function(type, id){
+        console.log(`Create ${type} ${id}`);
+        try {
+            switch(type) {
+                case "database":
+                    await DestinySQL.createTables();
+                    break;
+            }
+        }
+        catch(err){ console.log(`Failed to create databases. ${err}`); }
+        return;
+    }
 };
 
 module.exports = destiny_commands;

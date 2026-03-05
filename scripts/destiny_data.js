@@ -15,7 +15,7 @@ class destiny_data {
     static API_KEY = process.env.API_KEY;
     static ENDPOINT_PASSWORD = process.env.ENDPOINT_PASSWORD;
 
-    static render_filepath = process.env.DATA_PATH;
+    static render_filepath = process.env.DATA_PATH ? process.env.DATA_PATH : "";
 
     static player_directory = {};
     static weapon_directory = {};
@@ -77,6 +77,11 @@ class destiny_data {
         catch { console.log("Error while loading socket_directory."); }
         try{ await this.loadFromFile("weapon_directory", this.weapon_directory); }
         catch { console.log("Error while loading weapon_directory."); }
+        //
+        //if(this.weapon_directory.length == 0){
+        try { await this.saveWeaponDefinitions(this.item_definitions); }
+        catch { console.log("Error while trying to save weapon definitions, from DestinyInventoryItemDefinition."); }
+        //}
         
     };
     static async loadFromFile(file_name, target_dict) {
@@ -114,10 +119,7 @@ class destiny_data {
         fs.writeFile(this.render_filepath+"static_data/"+file_name+".json", JSON.stringify(data), { flag: 'w+' }, err => {
         if (err) {
             console.error(err);
-        } else {
-            // file written successfully
-            console.log("success");
-        }
+        } // file written successfully
         });
     };
 
@@ -441,28 +443,27 @@ class destiny_weapon {
     //increase stage to 3
     parseGunSockets() {
         this.perk_pool = {};
-        let perk_pool;
+        let perk_pool = {};
         let sock;
         let perk_hash, perk; let itemCategory;
         
-        if(!(this.item_hash in destiny_data.weapon_to_socket)) {
+        if(true || !(this.item_hash in destiny_data.weapon_to_socket)) {
             let all_sockets = destiny_data.item_definitions[this.item_hash];
-            if( !("sockets" in all_sockets && "socketEntries" in all_sockets["sockets"])){ return false; }
+            if( !all_sockets || !("sockets" in all_sockets && "socketEntries" in all_sockets["sockets"])){ return false; }
             all_sockets = all_sockets["sockets"]["socketEntries"];
-            destiny_data.writeToFile("test_sockets",all_sockets);
+            //destiny_data.writeToFile("test_sockets",all_sockets);
 
-            destiny_data.weapon_to_socket[this.item_hash] = new Set();
+            destiny_data.weapon_to_socket[this.item_hash] = {}; //new Set();
             perk_pool = destiny_data.weapon_to_socket[this.item_hash];
             let plug_hash, perk_array;
             let frame_two = false;
             for(let i = 0; i < all_sockets.length; i++) {
                 let definition = destiny_data.sockettype_definitions[all_sockets[i].socketTypeHash];
                 if(!definition){ continue; }
-                //console.log(i,definition,all_sockets[i]);
+
                 let category_hash = definition.plugWhitelist[0].categoryHash;
                 itemCategory = definition.plugWhitelist[0].categoryIdentifier;
                 if(!(valid_category_hashes.includes(category_hash))){ 
-                    //console.log(itemCategory, category_hash);
                     continue;
                 }
 
@@ -473,9 +474,8 @@ class destiny_weapon {
                     plug_hash = all_sockets[i]["reusablePlugSetHash"];
                 }
                 else{ continue; }
-                //console.log(i, destiny_data.plugset_definitions[plug_hash]);
+
                 perk_array = destiny_data.plugset_definitions[plug_hash]["reusablePlugItems"];
-                
                 if(itemCategory == 'frames') { if(frame_two){ itemCategory = 'frames_2'; } else { itemCategory = 'frames_1'; frame_two=true; } }
 
                 perk_pool[itemCategory] = new Set();
@@ -485,28 +485,31 @@ class destiny_weapon {
                         continue;
                     }   // else
                     perk_pool[itemCategory].add(perk_hash);
-                    //console.log(i, itemCategory);
                 }
 
             }
             destiny_data.weapon_to_socket[this.item_hash] = perk_pool;
+        } else {
+            perk_pool = destiny_data.weapon_to_socket[this.item_hash];
         }
-        perk_pool = destiny_data.weapon_to_socket[this.item_hash];
         let categoryArray = Object.keys(perk_pool);
         let sock_set;
         for(let i = 0; i < categoryArray.length; i++){
             itemCategory = categoryArray[i];
             sock_set = perk_pool[itemCategory];
-            //
-            //console.log(sock_set);
-            //console.log(typeof sock_set, destiny_data.weapon_directory.size);
-            for(let entry of sock_set.entries()) {
-                let perk_hash = entry[0];
-                sock = destiny_data.getSocket(perk_hash);
-                //console.log(perk_hash, itemCategory);
-                if(sock.itemTypeDesc == 'Enhanced Trait'){ continue; }
-                if(!(itemCategory in this.perk_pool)){ this.perk_pool[itemCategory] = []; }
-                this.perk_pool[itemCategory].push(perk_hash);
+            if(!(sock_set instanceof Set)) {    // convert map to set
+                sock_set = new Set(Object.values(sock_set))
+                perk_pool[itemCategory] = sock_set;
+            }
+            if(sock_set) {
+                for(let entry of sock_set.entries()) {
+                    let perk_hash = entry[0];//entry[0];
+                    sock = destiny_data.getSocket(perk_hash);
+
+                    if(sock.itemTypeDesc.includes('Enhanced')){ continue; }
+                    if(!(itemCategory in this.perk_pool)){ this.perk_pool[itemCategory] = new Set(); }
+                    this.perk_pool[itemCategory].add(perk_hash);
+                } 
             }
 
             
@@ -538,7 +541,6 @@ class destiny_weapon {
                 itemCategory = perk.itemCategory;
                 if(itemCategory == 'frames') { if(frame_two){ itemCategory = 'frames_2'; } else { itemCategory = 'frames_1'; frame_two=true; } }
                 if(!(itemCategory in this.perk_pool)){ this.perk_pool[itemCategory] = []; }
-                //console.log(i,itemCategory);
                 this.perk_pool[itemCategory].push(perk.hash);
             }
         }
@@ -563,6 +565,10 @@ class destiny_weapon {
             opp_set = destiny_data.weapon_to_socket[item_hash];
             if(!opp_set){ return false; }
         }
+        //if(!(opp_set instanceof Set)) {    // convert map to set
+        //    opp_set = new Set(Object.values(opp_set))
+        //    destiny_data.weapon_to_socket[item_hash] = opp_set;
+        //}
  
         for(let i in perk_keys) {
             let key = perk_keys[i];
@@ -571,7 +577,7 @@ class destiny_weapon {
                 let perk = this.perk_pool[key][j];
                 perk_set.add(perk);
             }
-
+            
             if(!(key in opp_set) || key==0){ continue; }
             rating += ( custom_intersection(perk_set,opp_set[key]).size / perk_set.size);
         }
@@ -584,13 +590,11 @@ class destiny_weapon {
         let super_set = new Set(destiny_data.categorised_guns[itemTypeDesc]);
         let rating_dict = {};
         
-        //console.log(super_set);
-        //console.log(typeof super_set);        
         for(let entry of super_set.entries()) {
             let item_hash = entry[0];
             let rating = this.compareGuns(item_hash);
             if(rating){
-                rating_dict[rating] = item_hash;
+                rating_dict[item_hash] = rating;
             }
         }
         return rating_dict;
@@ -607,7 +611,10 @@ function custom_intersection(set_one, set_two) {
     return set_three;
 }
 
-let folder_path = path.resolve(destiny_data.render_filepath, "static_data");
+let folder_path = "static_data";
+if(destiny_data.render_filepath){
+    folder_path = path.resolve(destiny_data.render_filepath, "static_data");
+}
 if (!fs.existsSync(folder_path)) {
     fs.mkdirSync(folder_path, true); // recursive = true
 }

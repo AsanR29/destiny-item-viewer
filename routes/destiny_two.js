@@ -1,6 +1,6 @@
 const express = require('express');
 const session = require('express-session');
-const mongoose = require('mongoose');
+//const mongoose = require('mongoose');
 var router = express.Router();
 
 var http = require('http');
@@ -27,9 +27,10 @@ router.get('/loginguest', async function(req, res, next) {
         "displayName": "Nasa2907",
         "displayNameCode": "1043"
     };
-    let result = await loginSequence(req, res, guest_form, "login");
-    if(result != true && "is_error" in result) { result.next_function(res); return; }
-    //res.redirect('/vault');
+    let result = await loginSequence(req, res, guest_form, "loginguest");
+    if(result == true){ res.redirect('/vault'); return; }
+    else if(result != false && "is_error" in result) { result.next_function(res); }
+    return;
 });
 
 async function loginSequence(req, res, form_body, type) {
@@ -38,17 +39,27 @@ async function loginSequence(req, res, form_body, type) {
     operation.run_info["type"] = type;
     let result_1 = await operation.loginUser(form_body);
     if(!result_1 || "is_error" in result_1) { 
-        switch(type){
-            case "login": res.redirect('/login'); break
-            case "signup": res.redirect('/signup'); break;
+        if("is_error" in result_1){
+            result_1.next_function(res);
+        } else{
+            switch(type){
+                case "login": case "loginguest": res.redirect('/login'); break
+                case "signup": res.redirect('/signup'); break;
+            }
+            req.flash("warning", "Failed to log in");
         }
-        req.flash("warning", "Failed to log in");
         return false;
     }
-    req.session.player = new PlayerSession(req.body.displayName,req.body.displayNameCode,req.body.password);
+    req.session.player = new PlayerSession(form_body.displayName,form_body.displayNameCode,form_body.password);
+    let result_2 = false;
+    if(type != "loginguest"){
+        result_2 = await operation.authenticate_1(res,session_id);  //this contains a res.redirect
+    } else { 
+        req.session.player.logged_in = true;
+        result_2 = true; 
+        await inventory_call(operation, req.sessionID);
+    }
     req.session.save();
-
-    let result_2 = await operation.authenticate_1(res,session_id);  //this contains a res.redirect
     return result_2;
 };
 
@@ -66,6 +77,15 @@ router.post('/signup', async function(req, res, next) {
 
 router.get('/authenticate', authenticate_call);
 
+async function inventory_call(operation, req_session_id) {
+    try{
+        let result_3 = await operation.getCharacters();
+        let result_4 = await operation.getItems(result_3);
+        let result_5 = await DD.getWeaponHashes(req_session_id, result_4);
+        return result_5;
+    } catch(err){ console.log(err); }
+    return false;
+}
 async function authenticate_call(req,res,next) {
     let operation;
     try{
@@ -92,9 +112,7 @@ async function authenticate_call(req,res,next) {
         if(result_2 == false){ return; }
         
         //
-        let result_3 = await operation.getCharacters();
-        let result_4 = await operation.getItems(result_3);
-        let result_5 = await DD.getWeaponHashes(req.sessionID, result_4);
+        await inventory_call(operation, req.sessionID);
         req.session.save(); //player.login / player.signup make changes to it
 
         res.redirect('/vault'); // later make it /player
@@ -189,7 +207,9 @@ router.get('/gun/:gun_id', async function(req, res, next) {
     s_gun_keys = Object.keys(similiar_guns);
     for(let i in s_gun_keys) {
         let key = s_gun_keys[i];
-        similiar_guns[key] = DD.weapon_directory[similiar_guns[key]];
+        let rating = similiar_guns[key];
+        similiar_guns[key] = DD.weapon_directory[key];
+        similiar_guns[key]["rating"] = rating;
     }
 
     res.render('destiny/gun_individual', { title: "Weapon Data", gun_data: gun, socket_data: perk_data, similiar_guns: similiar_guns} );
@@ -201,10 +221,23 @@ router.get('/model/:gun_id', async function(req, res, next) {
     }
     gun = DD.weapon_directory[req.params.gun_id];
 
+    switch(gun.stage) {
+        case 1:
+            gun.parseGunData();
+        case 2:
+            gun.parseGunSockets();
+    }
+
     let text = false;
     let desc = false;
-    if("lore" in gun && gun["lore"] && DD.lore_directory[gun["lore"]]){
-        text = DD.lore_directory[gun["lore"]];
+    let lore_hash = false;
+
+    if("lore" in gun){
+        lore_hash = gun["lore"];
+        if(lore_hash){
+            lore_hash = String(lore_hash); 
+            text = DD.lore_directory[lore_hash];
+        }
     }
     else{ text = false; }
     gun["loreDesc"] = text;
@@ -212,13 +245,6 @@ router.get('/model/:gun_id', async function(req, res, next) {
     let gun_sockets = [];
     let sock;
     let perk_hash; let perk;
-
-    switch(gun.stage) {
-        case 1:
-            gun.parseGunData();
-        case 2:
-            gun.parseGunSockets();
-    }
 
     let perk_data = {};
     let perk_keys = Object.keys(gun.perk_pool);
@@ -228,12 +254,11 @@ router.get('/model/:gun_id', async function(req, res, next) {
         perk_data[key] = [];
         let perk_set = gun.perk_pool[key];
         
-        for(let entry in perk_set) {
-            let perk_hash = perk_set[entry];
+        for(let entry of perk_set.entries()) {
+            let perk_hash = entry[0];
             perk_data[key].push(DD.getSocket(perk_hash));
         }
     }
-
     res.render('destiny/gun_model', { title: "Weapon Data", gun_data: gun, socket_data: perk_data} );
 });
 

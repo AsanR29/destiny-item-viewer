@@ -1,6 +1,6 @@
 var http = require('http');
 const { URLSearchParams } = require('url');
-const auth = require('auth0-js');
+const auth = require('auth0');
 const crypto = require('node:crypto');
 
 const DD = require("../scripts/destiny_data");
@@ -26,7 +26,6 @@ class DestinyRequest {
         for(let i = 0; i < endpoint_names.length; i++) {
             this.BUNGIE_ENDPOINTS[endpoint_names[i]] = manifest_data[endpoint_names[i]];
         }   // like "DestinyLoreDefinition" : "/common/url+?%randomlygeneratedhash.json"
-
         let prefix = "https://www.bungie.net";
 
         // this can all happen async tbh
@@ -34,7 +33,7 @@ class DestinyRequest {
         lore_opp.create(
             prefix+this.BUNGIE_ENDPOINTS["DestinyLoreDefinition"],{},
             lore_opp.genericSaveDefinitions.bind(lore_opp), "GET"
-        ).then(DD.writeToFile("DestinyLoreDefinition",DD.lore_directory));
+        ).then( DD.writeToFile("DestinyLoreDefinition",DD.lore_directory));
 
         let item_opp = new DestinyRequest(false, {"target":DD.item_definitions});
         item_opp.create(
@@ -85,7 +84,8 @@ class DestinyRequest {
         let result = await this.create(url, User,
             false, "POST"
         );
-        if("is_error" in result){ return false; }
+        if("is_error" in result){ return result; }
+        console.log("response yeah: ",result);
         new_player.membershipType = result.Response[0]["membershipType"];
         new_player.membershipId = result.Response[0]["membershipId"];
         
