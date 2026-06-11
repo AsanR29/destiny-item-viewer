@@ -103,7 +103,7 @@ class DestinyRequest {
 
         const client_id = process.env.CLIENT_ID;
         const client_secret = process.env.CLIENT_SECRET;
-        let state = crypto.randomBytes(255).toString("hex");
+        let state = Buffer.from(process.env.SITE_AUTH_URL).toString('base64url');
 
         this.run_info["auth_state"] = state;
         DD.auth_processes[session_id] = this;    //this operation

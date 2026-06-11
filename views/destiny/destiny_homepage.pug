@@ -12,10 +12,10 @@ block content
         //- top left nav
         nav(class="bg-gray-50 border-b")
         div(class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-4 py-2")
-            a(href="./", class="text-gray-600 hover:text-blue-600") Home
-            a(href="login", class="text-gray-600 hover:text-blue-600") Login
-            a(href="contact", class="text-gray-600 hover:text-blue-600") Contact
-            a(href="random", class="text-gray-600 hover:text-blue-600") RANDOM
+            a(href=DESTINYPREFIX+"", class="text-gray-600 hover:text-blue-600") Home
+            a(href=DESTINYPREFIX+"login", class="text-gray-600 hover:text-blue-600") Login
+            a(href=DESTINYPREFIX+"contact", class="text-gray-600 hover:text-blue-600") Contact
+            a(href=DESTINYPREFIX+"random", class="text-gray-600 hover:text-blue-600") RANDOM
 
         main(class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8")
             //- center
@@ -24,8 +24,8 @@ block content
                     h1(class="text-4xl font-extrabold sm:text-5xl md:text-6xl") Welcome Guardian
                     p(class="mt-4 text-lg sm:text-xl") Organise your vault, plan loadouts, and mark old guns for obliteration!  
                     div(class="mt-6 flex justify-center gap-4")
-                    a(href="login", class="border border-white px-6 py-3 rounded-md font-medium hover:bg-white hover:text-blue-600") Use Game Account
-                    a(href="loginguest", class="border border-white px-6 py-3 rounded-md font-medium hover:bg-white hover:text-blue-600") Continue as Guest
+                    a(href=DESTINYPREFIX+"login", class="border border-white px-6 py-3 rounded-md font-medium hover:bg-white hover:text-blue-600") Use Game Account
+                    a(href=DESTINYPREFIX+"loginguest", class="border border-white px-6 py-3 rounded-md font-medium hover:bg-white hover:text-blue-600") Continue as Guest
 
             div(class="flex h-screen bg-gray-100")
                 div(class="flex-1 p-6")

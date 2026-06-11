@@ -6,10 +6,10 @@ mixin drop_header(title)
     //- this is a white line
     nav(class="bg-gray-50 border-b")
     div(class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-4 py-2")
-        a(href="./", class="text-black hover:text-blue-600") Home
-        a(href="login", class="text-black hover:text-blue-600") Login
-        a(href="contact", class="text-black hover:text-blue-600") Contact
-        a(href="random", class="text-black hover:text-blue-600") RANDOM
+        a(href=DESTINYPREFIX+"", class="text-black hover:text-blue-600") Home
+        a(href=DESTINYPREFIX+"login", class="text-black hover:text-blue-600") Login
+        a(href=DESTINYPREFIX+"contact", class="text-black hover:text-blue-600") Contact
+        a(href=DESTINYPREFIX+"random", class="text-black hover:text-blue-600") RANDOM
 
 mixin search_bar(name_dict,gun_data)
     //- Create a searchbar

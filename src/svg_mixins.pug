@@ -2,6 +2,7 @@
     //{x:,y:}
     const pi_ratio = Math.PI/180;
 
+    const one_line = [{x:-0.5,y:-0.5,},{x:0.5,y:0.5}];
     const simple_triangle = [{x:-0.5,y:0.433},{x:0,y:-0.433},{x:0.5,y:0.433}]; //[{x:0,y:0.866},{x:0.5,y:0},{x:1,y:0.866}];
     const simple_quadrilateral = [{x:-0.7,y:-0.79},{x:0,y:-0.2},{x:0.7,y:-0.2},{x:-0.5,y:0.6}];
     const wall_paper_line = [{x:-0.2,y:-1},{x:-0.1,y:-0.8},{x:-0.1,y:0.8},{x:0.1,y:1},{x:0.2,y:1},{x:0.1,y:0.8},{x:0.1,y:-0.8},{x:-0.1,y:-1}];
@@ -34,8 +35,73 @@
         }
         return points_text;
     }
+    function MoveDiagonally(x,y,size,angle){
+        let real_angle = pi_ratio * angle;
+        let new_x, new_y;
 
+        new_x = size*Math.cos(real_angle) - size*Math.sin(real_angle) + x;
+        new_y = size*Math.sin(real_angle) + size*Math.cos(real_angle) + y;
 
+        return {'x':new_x,'y':new_y};
+    }
+    function ApproachLimit(input,increment,limit){
+        input += increment;
+        if(input > limit){ input = limit; }
+        return input;
+    }
+    function PopulateLine(LinesA,x_max,y_max){
+        let select_line, mine_pos;
+        for(let i = 0; i < 50; i++){
+            select_line = Math.floor(Math.random()*x_max);
+            mine_pos = Math.floor(Math.random()*y_max);
+            if( !(select_line in LinesA)){
+                LinesA[select_line] = [];
+            }
+            LinesA[select_line].push(mine_pos);
+        }
+        return LinesA;
+    }
+    function compareNumbers(a, b) {
+        return a - b;
+    }
+    function PointToText(point){
+        let text = `${point[0]},${point[1]} `;
+        return text;
+    }
+    function PointSum(a,b){
+        let c = [a[0]+b[0],a[1]+b[1]];
+        return c;
+    }
+    function add(a, b){
+        return a + b;
+    }
+    function RandomOutcome(outcomes,weights){
+        if(outcomes.length != weights.length){ return -1; }
+        let sum = weights.reduce(add,0);
+        let pos = Math.floor(Math.random()*sum);
+        let running_total = 0;
+        let i = 0;
+        for(let weight of weights){
+            running_total += weight;
+            if(running_total >= pos)
+                break;
+            ++i;
+        }
+        if(i > outcomes.length){ return -1; }
+        // else
+        return outcomes[i];
+    }
+    function ColorSpectrum(color_code,pos){
+        let spectrum = ["00","11","22","33","44","55","66","77","88","99","AA","BB","CC","DD","EE","FF"];
+        let sub_color;
+        let result = [];
+        for(let i = 0; i < 16; i++){
+            color_code[pos] = spectrum[i];
+            sub_color = color_code.reduce(add,"#");
+            result.push(sub_color);
+        }
+        return result;
+    }
 
 mixin NoisyCircle()
     svg(viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg")
@@ -284,3 +350,115 @@ mixin ProgressBar(progress, limit)
 
         text(x="10" y="35" class="progress_count") #{progress}
 
+mixin RandWalkerWallpaper(size, sparse_amp, limit, width, height, fill_color, border_color)
+    -
+        console.log(size,sparse_amp,limit,width,height,fill_color,border_color);
+    svg(viewBox=`0 0 ${width} ${height}` xmlns="http://www.w3.org/2000/svg" stroke-width="1")
+        -
+            let x = Math.floor(Math.random() * width/2);
+            let y = Math.floor(Math.random() * height/2);
+            let angle = 0;
+            let straightFactor = 0.1;
+            let hex_code = "#FFFFFF";
+            var i = 2000;
+            let coord_obj = {};
+            let coords_input = [];
+        while i > 0
+            -
+                if(Math.random() < straightFactor){
+                    straightFactor = 0.1;
+                } else{ 
+                    angle = Math.floor(Math.random() * 6) * 60 + 5;
+
+                    straightFactor = ApproachLimit(straightFactor,0.1,1); 
+                    }
+                coord_obj = MoveDiagonally(x,y,size,angle);
+                if(coord_obj.x < width && coord_obj.x > 0 && coord_obj.y > 0){ 
+                    x = coord_obj.x; 
+                    y = coord_obj.y; 
+                } else{ continue; }
+
+                coord_obj = {'x': x/width,'y': y/width};
+                coords_input.push(coord_obj);
+                //console.log(i,coord_obj,coords_input);
+                --i;
+        -
+            var points_text = DrawShape(coords_input,1000,100,100,10);
+        polyline(points=points_text fill="none" stroke=hex_code)
+
+mixin DrawSparseLines(LinesA,x_max,y_max,type)
+    if type == 1
+        -
+            let counter = 0;
+            let line_oi;
+            let active_lines = [];
+            let last_pos, end_pos;
+        while counter < x_max
+            -
+                last_pos = [counter,0];
+                if(counter in linesA){
+
+                    linesA[counter].sort(compareNumbers);   // function compareNumbers
+                    line_oi = linesA[counter];
+                    end_pos = line_oi[0];
+                    active_lines.push(last_pos,end_pos);
+                    for(let i = 1; i < line_oi.length; i++){
+                        last_pos = end_pos+1;
+                        end_pos = line_oi[i];
+                        active_lines.push(last_pos,end_pos);
+                    }
+                    last_pos = end_pos+1;
+                }
+                // for everyone, at end
+                active_lines.push(last_pos,[x_max-1,])
+                
+
+
+
+mixin DegradationWallpaper(size, width, height, fill_color, border_color)
+    svg(viewBox=`0 0 ${width} ${height}` xmlns="http://www.w3.org/2000/svg" stroke-width="1")
+        -
+            function
+            let LinesA = {};
+            let LinesB = {};
+            let LinesC = {};
+
+            let x_max = (width*1.20) / (size);
+            let y_max = (height*1.20) / (size);
+
+            LinesA = PopulateLine(LinesA, x_max,y_max);
+            LinesB = PopulateLine(LinesB, x_max, y_max);
+            LinesC = PopulateLine(LinesC, y_max,x_max); //inverted cus horizontal
+
+        DrawSparseLines(LinesA,x_max,y_max,1)
+
+mixin TigerLine(start_point,point_mod,limit,colors,odds)
+    -
+        let counter = 0;
+        let point_1 = start_point;
+        let point_2 = point_1;
+        let stroke_list;
+        let stroke_color;
+    while counter < limit 
+        -
+            point_1 = point_2;
+            point_2 = PointSum(point_1,point_mod);
+            stroke_color = RandomOutcome(colors,odds);
+            ++counter;
+        polyline(points = `${PointToText(point_1)} ${PointToText(point_2)}` stroke=stroke_color)
+
+mixin ShitLine(size, width, height)
+    svg(viewBox=`0 0 ${width} ${height}` xmlns="http://www.w3.org/2000/svg" stroke-width="1")
+        -
+            let counter = 0;
+            let whites = ColorSpectrum(["FF","FF","FF","FF"],3);
+            let odds = [3,3,3,3,3,2,2,2,2,2,1,1,1,1,1,1];
+            //let blacks = ["#000000AA", "#00000055", "00000011"];
+            let x_max = Math.floor(width/size);
+            let y_max = Math.floor(height/size);
+        while counter < 100
+            +TigerLine([counter*20,0],[10,10],x_max,whites,odds)
+            +TigerLine([counter*20,500],[10,-10],x_max,whites,odds)
+            +TigerLine([0,counter*20],[20,0],y_max,whites,odds)
+            -
+                ++counter;

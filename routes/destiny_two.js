@@ -14,21 +14,36 @@ const {Zebra, text_command}  = require("../scripts/cmd_multitool");
 
 const {DestinyPlayer,PlayerSession} = require("../scripts/destiny_player");
 
+const destinyPREFIX = '/destiny/';
+const URL = Object.freeze({
+    HOME: destinyPREFIX+    "",
+    LOGIN: destinyPREFIX+   "login",
+    SIGNUP: destinyPREFIX+  "signup",
+    GUEST: destinyPREFIX+   "loginguest",
+    AUTH: destinyPREFIX+    "authenticate",
+    PLAYER: destinyPREFIX+  "player",
+    VAULT: destinyPREFIX+   "vault",
+    SOCKETS: destinyPREFIX+ "sockets",
+    GUN: destinyPREFIX+     "gun",
+    MODEL: destinyPREFIX+   "model",
+    RANDOM: destinyPREFIX+  "random",
+    //: "",
+});
 //routes
-router.get('/',  function(req, res, next) {
+router.get(URL.HOME,  function(req, res, next) {
     res.render('destiny/destiny_homepage', { title: "Destiny Two", unique_users: 3 } );
 });
 
-router.get('/login', function(req, res, next) {
+router.get(URL.LOGIN, function(req, res, next) {
     res.render('destiny/destiny_login', { title: "Bungie Account", form_type:'Log in' } );
 });
-router.get('/loginguest', async function(req, res, next) {
+router.get(URL.GUEST, async function(req, res, next) {
     let guest_form = {  // My account.
         "displayName": "Nasa2907",
         "displayNameCode": "1043"
     };
     let result = await loginSequence(req, res, guest_form, "loginguest");
-    if(result == true){ res.redirect('/vault'); return; }
+    if(result == true){ res.redirect(URL.VAULT); return; }
     else if(result != false && "is_error" in result) { result.next_function(res); }
     return;
 });
@@ -43,8 +58,8 @@ async function loginSequence(req, res, form_body, type) {
             result_1.next_function(res);
         } else{
             switch(type){
-                case "login": case "loginguest": res.redirect('/login'); break
-                case "signup": res.redirect('/signup'); break;
+                case "login": case "loginguest": res.redirect(URL.LOGIN); break
+                case "signup": res.redirect(URL.SIGNUP); break;
             }
             req.flash("warning", "Failed to log in");
         }
@@ -63,19 +78,19 @@ async function loginSequence(req, res, form_body, type) {
     return result_2;
 };
 
-router.post('/login', function(req, res, next) {
+router.post(URL.LOGIN, function(req, res, next) {
     loginSequence(req, res, req.body, "login");
     return;
 });
-router.get('/signup', function(req, res, next) {
+router.get(URL.SIGNUP, function(req, res, next) {
     res.render('destiny/destiny_login', { title: "Bungie Account", form_type:'Sign up' } );
 });
-router.post('/signup', async function(req, res, next) {
+router.post(URL.SIGNUP, async function(req, res, next) {
     loginSequence(req, res, req.body, "signup");
     return;
 });
 
-router.get('/authenticate', authenticate_call);
+router.get(URL.AUTH, authenticate_call);
 
 async function inventory_call(operation, req_session_id) {
     try{
@@ -93,7 +108,7 @@ async function authenticate_call(req,res,next) {
         let result_1 = await operation.authenticate_2(req.query);
         
         if(result_1 == false || "is_error" in result_1) { 
-            res.redirect('/login');
+            res.redirect(URL.LOGIN);
             req.flash("warning", "Failed to log in");
             return;
         }
@@ -102,11 +117,11 @@ async function authenticate_call(req,res,next) {
         switch(operation.run_info["type"]) {
             case "login":
                 result_2 = await player.login(req.session.player);
-                if(result_2 == false){ res.redirect('/login'); }
+                if(result_2 == false){ res.redirect(URL.LOGIN); }
                 break;
             case "signup":
                 result_2 = await player.signup(req.session.player);
-                if(result_2 == false){ res.redirect('/signup'); }
+                if(result_2 == false){ res.redirect(URL.SIGNUP); }
                 break;
         }
         if(result_2 == false){ return; }
@@ -115,7 +130,7 @@ async function authenticate_call(req,res,next) {
         await inventory_call(operation, req.sessionID);
         req.session.save(); //player.login / player.signup make changes to it
 
-        res.redirect('/vault'); // later make it /player
+        res.redirect(URL.VAULT); // later make it /player
         req.flash("info", "Logged in");
     } catch(err) { 
         console.log(err);
@@ -128,13 +143,13 @@ async function authenticate_call(req,res,next) {
     }
 };
 
-router.get('/player', function(req, res, next) {
+router.get(URL.PLAYER, function(req, res, next) {
     res.render('destiny/destiny_player', { title: "Your Account" } );
 });
 
 async function vault_call(req, res, next){
     if( !(req.session.player && req.session.player.logged_in) ){
-        res.redirect('/login'); return;
+        res.redirect(URL.LOGIN); return;
     } //else: they're logged_in
     let filter = req.params.filter;
     let inventory_data = {};
@@ -159,19 +174,19 @@ async function vault_call(req, res, next){
     if(!filter){ filter = false; }
     res.render('destiny/destiny_vault', { title: "Your vault", vault_data: inventory_data, gun_lookup: gun_lookup, filter: filter} );
 }
-router.get('/vault', vault_call);
-router.get('/vault/:filter', vault_call);
+router.get(URL.VAULT, vault_call);
+router.get(URL.VAULT+'/:filter', vault_call);
 
-router.get('/sockets', function(req, res, next){
+router.get(URL.SOCKETS, function(req, res, next){
     res.render('destiny/destiny_sockets', { title: "Sockets", socket_data: socket_directory, filter: false} );
 });
-router.get('/sockets/:filter', function(req, res, next){
+router.get(URL.SOCKETS+'/:filter', function(req, res, next){
     res.render('destiny/destiny_sockets', { title: "Sockets", socket_data: socket_directory, filter: req.params.filter} );
 });
 
-router.get('/gun/:gun_id', async function(req, res, next) {
+router.get(URL.GUN+'/:gun_id', async function(req, res, next) {
     if( !(req.session.player && req.session.player.logged_in) ){
-        res.redirect('/login'); return;
+        res.redirect(URL.LOGIN); return;
     } //else: they're logged_in
     let player = DD.player_directory[req.sessionID];
 
@@ -214,7 +229,7 @@ router.get('/gun/:gun_id', async function(req, res, next) {
 
     res.render('destiny/gun_individual', { title: "Weapon Data", gun_data: gun, socket_data: perk_data, similiar_guns: similiar_guns} );
 });
-router.get('/model/:gun_id', async function(req, res, next) {
+router.get(URL.MODEL+'/:gun_id', async function(req, res, next) {
     let gun;
     if( !(req.params.gun_id in DD.weapon_directory) || DD.weapon_directory[req.params.gun_id] == false) {
         await DD.defineWeapons([{"itemHash":req.params.gun_id}]);
@@ -262,12 +277,12 @@ router.get('/model/:gun_id', async function(req, res, next) {
     res.render('destiny/gun_model', { title: "Weapon Data", gun_data: gun, socket_data: perk_data} );
 });
 
-router.get('/random', function(req, res, next) {
+router.get(URL.RANDOM, function(req, res, next) {
     let keys = Object.keys(DD.weapon_directory);
     let max = keys.length;
     let id = Math.floor(Math.random() * max);
     
-    res.redirect(`/model/${keys[id]}`);
+    res.redirect(URL.MODEL+`/${keys[id]}`);
 });
 
 router.get('/ref', function(req, res, next) {
