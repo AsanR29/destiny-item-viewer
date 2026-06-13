@@ -77,15 +77,17 @@
     }
     function RandomOutcome(outcomes,weights){
         if(outcomes.length != weights.length){ return -1; }
+
+
         let sum = weights.reduce(add,0);
         let pos = Math.floor(Math.random()*sum);
+        //console.log("pos = ",pos);
         let running_total = 0;
-        let i = 0;
-        for(let weight of weights){
-            running_total += weight;
-            if(running_total >= pos)
+        let i;
+        for(i = 0; i < weights.length; ++i){
+            running_total += weights[i];
+            if(running_total > pos)
                 break;
-            ++i;
         }
         if(i > outcomes.length){ return -1; }
         // else
@@ -439,26 +441,50 @@ mixin TigerLine(start_point,point_mod,limit,colors,odds)
         let point_2 = point_1;
         let stroke_list;
         let stroke_color;
-    while counter < limit 
+        let last_stroke = RandomOutcome(colors,odds);
+    while counter < limit
         -
-            point_1 = point_2;
-            point_2 = PointSum(point_1,point_mod);
             stroke_color = RandomOutcome(colors,odds);
+            point_2 = PointSum(point_2,point_mod);
+
+
+
+
+        if stroke_color != last_stroke
+            polyline(points = `${PointToText(point_1)} ${PointToText(point_2)}` stroke=last_stroke)
+            -
+                point_1 = point_2;
+                last_stroke = stroke_color;
+        //- Finally
+        //- if counter == limit-1
+            polyline(points = `${PointToText(point_1)} ${PointToText(point_2)}` stroke=last_stroke)
+        -
             ++counter;
-        polyline(points = `${PointToText(point_1)} ${PointToText(point_2)}` stroke=stroke_color)
+
+//- mixin ZebraLine(start_point,point_mod,limit,colors,odds)
 
 mixin ShitLine(size, width, height)
     svg(viewBox=`0 0 ${width} ${height}` xmlns="http://www.w3.org/2000/svg" stroke-width="1")
         -
-            let counter = 0;
-            let whites = ColorSpectrum(["FF","FF","FF","FF"],3);
-            let odds = [3,3,3,3,3,2,2,2,2,2,1,1,1,1,1,1];
-            //let blacks = ["#000000AA", "#00000055", "00000011"];
-            let x_max = Math.floor(width/size);
+            let counter = 1;
+            // let whites = ColorSpectrum(["FF","FF","FF","FF"],3);
+            //let odds = [1,1,2,4,4,4,4,3,3,3,2,1,1,1,1,1];
+            let whites = ["#FFFFFF11","#FFFFFF55","#FFFFFFBB"];
+            let odds = [1,1,1];
+            let x_max = Math.floor(width/size)*2;
             let y_max = Math.floor(height/size);
-        while counter < 100
-            +TigerLine([counter*20,0],[10,10],x_max,whites,odds)
-            +TigerLine([counter*20,500],[10,-10],x_max,whites,odds)
-            +TigerLine([0,counter*20],[20,0],y_max,whites,odds)
+        while counter < x_max
+            +TigerLine([counter*20,0],[size,size],x_max-counter,whites,odds)
+            -
+                ++counter;
+        -
+            counter = 0;
+        while counter < y_max
+            +TigerLine([0,counter*20],[size,size],x_max,whites,odds)
+            //-
+            +TigerLine([0,counter*20],[size,-1*size],x_max,whites,odds)
+            //-
+            +TigerLine([0,counter*20],[4*size,0],x_max,whites,odds)
+            +TigerLine([-10,10+counter*20],[4*size,0],x_max,whites,odds)
             -
                 ++counter;
