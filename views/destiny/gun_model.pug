@@ -9,14 +9,14 @@ block content
             div(id="lore_tab" class="relative" style="z-index:2; display:block;")
                 div.pl-10.pr-10
                     div.bg-opacity-25.p-2(class="size-fit")
-                        if "loreDesc" in gun_data && gun_data["loreDesc"]
+                        if "loreDesc" in gun_data["wp_data"] && gun_data["wp_data"]["loreDesc"]
                             h1.text-white.text-4xl.font-bold #{gun_data["loreDesc"]["displayProperties"]["name"]}
-                            label.text-white.text-2xl #{gun_data["loreDesc"]["subtitle"]}
-                            p(id="loreEntry" class="text-amber-500 text-base" style="white-space: pre; text-wrap: wrap;") #{gun_data["loreDesc"]["displayProperties"]["description"]}
+                            label.text-white.text-2xl #{gun_data["wp_data"]["loreDesc"]["subtitle"]}
+                            p(id="loreEntry" class="text-amber-500 text-base" style="white-space: pre; text-wrap: wrap;") #{gun_data["wp_data"]["loreDesc"]["displayProperties"]["description"]}
             div(id="perk_tab" class="justify-start relative" style="z-index:2; display:none;")
                 div.pl-10.pr-10
                     div.p-2(class="size-fit")
-                        h1.text-white.text-4xl.font-bold #{gun_data["name"]}
+                        h1.text-white.text-4xl.font-bold #{gun_data["wp_data"]["name"]}
                     div(class="flex h-min")
                         each socket_key in Object.keys(socket_data)
                             - let socket_pool = socket_data[socket_key];
@@ -31,7 +31,7 @@ block content
                         label(class="text-gray-500 text-4xl").text-left.p-4 Lore Tab
                     div(id="right_button" onclick="ShowPerks()" class="bg-gray-800 min-w-fit w-4/5 justify-self-end")
                         label(class="text-gray-500 text-4xl").text-right.p-4 Perk Tab
-                img(src="https://bungie.net"+ gun_data["screenshot"])
+                img(src="https://bungie.net"+ gun_data["wp_data"]["screenshot"])
                 //- Grid Container
                 div(class=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6")
                     +loopSocketData(socket_data)

@@ -1,7 +1,8 @@
 
-var app = require('../app');
+//import { ErrorRequestHandler } from 'express';
+import {app} from '../app.js';
 
-var port = "0";
+var port : number = 0;
 if(process.env.USE_CERTIFICATES == 1){
   port = normalizePort(process.env.PORT || '443');
 } else if(process.env.USE_CERTIFICATES == 2) {
@@ -9,15 +10,16 @@ if(process.env.USE_CERTIFICATES == 1){
 } else {
   port = normalizePort(process.env.PORT || '80');
 }
-
-app.set('port', port);
+if(port != -1){ 
+  app.set('port', port);
+}
 
 /**
  * Create HTTP server.
  */
 
 //var server = http.createServer(app);
-var server = require("../socket_connection");
+import {server} from "../socket_connection.js";
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -33,12 +35,12 @@ server.on('listening', onListening);
  * Normalize a port into a number, string, or false.
  */
 
-function normalizePort(val) {
+function normalizePort(val : string) : number {
   var port = parseInt(val, 10);
 
   if (isNaN(port)) {
     // named pipe
-    return val;
+    return -1;
   }
 
   if (port >= 0) {
@@ -46,14 +48,15 @@ function normalizePort(val) {
     return port;
   }
 
-  return false;
+  return -1;
 }
 
 /**
  * Event listener for HTTP server "error" event.
  */
 
-function onError(error) {
+// ErrorRequestHandler (err: any, req: Request, res: Response, next: NextFunction)
+function onError(error: any) {
   if (error.syscall !== 'listen') {
     throw error;
   }
