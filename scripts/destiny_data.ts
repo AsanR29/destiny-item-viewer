@@ -1,41 +1,54 @@
-const fs = require('node:fs');
-const path = require('node:path');
+import fs  from 'node:fs';
+import path from 'node:path';
 
-const DestinySQL = require("./destiny_sql");
-const DestinyPlayer = require("./destiny_player").DestinyPlayer;
+import {DestinySQL} from "./destiny_sql.js";
+import {DestinyPlayer} from "./destiny_player.js" //.DestinyPlayer;
 
 // plug categories which denote that its a perk
 const valid_category_hashes = [1744546145,2833605196,1806783418,7906839,164955586,3809303875,1257608559,2619833294,1757026848,577918720,1202604782,2718120384,3962145884,1041766312,683359327,1697972157];
 // this is intrinsics, barrels, magazines, frames, origins, bowstrings, arrows, scopes, batteries, stocks, tubes, magazines_gl, grips, blades, guards, hafts
 
-class destiny_data {
-    static DISCORD_TOKEN = process.env.DISCORD_TOKEN;
-    static CLIENT_ID = process.env.CLIENT_ID;
-    static CLIENT_SECRET = process.env.CLIENT_SECRET;
-    static API_KEY = process.env.API_KEY;
-    static ENDPOINT_PASSWORD = process.env.ENDPOINT_PASSWORD;
+export interface GunFile {
+    item_hash : string;
+    hash_unique : number;
+    stage : number;
+    instance_hash : string;
+    //
+    wp_data : weapon_data;
+    sockets : weapon_sockets;
+    unique : weapon_unique;
+}
 
-    static render_filepath = process.env.DATA_PATH ? process.env.DATA_PATH : "";
+export class destiny_data {
+    static DISCORD_TOKEN : string = process.env.DISCORD_TOKEN;
+    static CLIENT_ID : string = process.env.CLIENT_ID;
+    static CLIENT_SECRET : string = process.env.CLIENT_SECRET;
+    static API_KEY : string = process.env.API_KEY;
+    static ENDPOINT_PASSWORD : string = process.env.ENDPOINT_PASSWORD;
 
-    static player_directory = {};
-    static weapon_directory = {};
+    static render_filepath : string = process.env.DATA_PATH ? process.env.DATA_PATH : "";
+
+    static player_directory : {[key:string]:any} = {};
+    static weapon_directory : {[key:string]:any} = {};
     static name_to_weapon = {};
 
-    static categorised_guns = {};
-    static lore_directory = {};
-    static socket_directory = {};
-    static categorised_sockets = {};
+    static categorised_guns : {[key:string]:any}= {};
+    static lore_directory : {[key:string]:any} = {};
+    static socket_directory : {[key:string]:any} = {};
+    static categorised_sockets : {[key:string]:any} = {};
 
-    static socket_to_weapon = {};
-    static weapon_to_socket = {};
+    static socket_to_weapon : {[key:string]:any} = {};
+    static weapon_to_socket : {[key:string]:any} = {};
 
-    static item_definitions = {};
-    static sockettype_definitions = {};
-    static perk_definitions = {};
-    static plugset_definitions = {};
-    static damagetype_definitions = {};
+    static item_definitions : {[key:string]:any} = {};
+    static sockettype_definitions : {[key:string]:any} = {};
+    static perk_definitions : {[key:string]:any} = {};
+    static plugset_definitions : {[key:string]:any} = {};
+    static damagetype_definitions : {[key:string]:any} = {};
+    // does this one get used
+    static socket_definitions : {[key:string]:any} = {};
 
-    static auth_processes = {};
+    static auth_processes : {[key:string]:any} = {};
 
     // MANIFEST ZONE
     //destiny_commands.destiny_manifest("","");
@@ -84,13 +97,13 @@ class destiny_data {
         //}
         
     };
-    static async loadFromFile(file_name, target_dict) {
-        let val = false;
+    static async loadFromFile(file_name : string, target_dict : any) {
+        let val : string | boolean = false;
         let data = fs.readFileSync(this.render_filepath+"static_data/"+file_name+".json", "utf8");
         // file written successfully
         val = data;
 
-        let input = "";
+        let input : {[key:string]:any} = {};
         try{
             input = JSON.parse(val);
         } catch(err){ console.log(err); return false; }
@@ -101,21 +114,29 @@ class destiny_data {
             console.log("j_keys length ",j_keys.length);
             for(let i = 0; i < j_keys.length; i++)
             {
-                if(target_dict == this.weapon_directory){ 
-                    let gun = destiny_weapon.clone(input[j_keys[i]]);
-                    target_dict[j_keys[i]] = gun;
-                    await this.shelfWeapon(j_keys[i], gun); 
+                let a_key = j_keys[i];
+                if(a_key){
+                    if(target_dict == this.weapon_directory){ 
+                        let selected_gun = input[a_key];
+                        let gun = destiny_weapon.clone(selected_gun);
+                        target_dict[a_key] = gun;
+                        if(gun.wp_data){
+                            await this.shelfWeapon(a_key, gun.wp_data); 
+                        }
+                    }
+                    else{
+                        target_dict[a_key] = input[a_key];
+                    }
+                    if(target_dict == this.socket_directory){ 
+                        await this.unpackSocket(this.categorised_sockets, a_key, input[a_key])
+                    }
                 }
-                else{
-                    target_dict[j_keys[i]] = input[j_keys[i]];
-                }
-                if(target_dict == this.socket_directory){ await this.unpackSocket(this.categorised_sockets, j_keys[i], input[j_keys[i]])}
             }
         }
         return true;
     };
 
-    static async writeToFile(file_name, data) {
+    static async writeToFile(file_name : string, data : any) {
         fs.writeFile(this.render_filepath+"static_data/"+file_name+".json", JSON.stringify(data), { flag: 'w+' }, err => {
         if (err) {
             console.error(err);
@@ -123,9 +144,9 @@ class destiny_data {
         });
     };
 
-    static async shelfWeapon(hash, gun) {
+    static async shelfWeapon(hash : string, gun : weapon_data) {
         // categorised guns
-        if(gun == false){ return false; }
+        //if(gun == false){ return false; }
         let target_dict = destiny_data.categorised_guns;
         if( "itemTypeDesc" in gun){
             if(!(gun["itemTypeDesc"] in target_dict)){ target_dict[gun["itemTypeDesc"]] = []; }
@@ -140,35 +161,38 @@ class destiny_data {
         }
         return true;
     };
-    static async shelfSocket(target_dict, hash, socket) {
+    static async shelfSocket(target_dict : any, hash : string, socket : string) {
         if(!(socket in target_dict)){ target_dict[socket] = []; }
         target_dict[socket].push(hash);
     }
-    static async unpackSocket(target_dict, hash, sockets) {
+    static async unpackSocket(target_dict : any, hash : string, sockets : {[key:string]:any}) {
         let cats = sockets["itemCategoryHashes"];
         for(let i = 0; i < cats.length; i++){
-            await shelfSocket(target_dict, hash, cats[i]);
+            await destiny_data.shelfSocket(target_dict, hash, cats[i]);
         }
     }
 
-    static async saveWeaponDefinitions(data) {
+    static async saveWeaponDefinitions(data : {[key:string]:any}) {
         console.log("Save Weapon Definitions.");
         let def_keys = Object.keys(data);
         let entry, string_key;
         for(let i = 0; i < def_keys.length; i++)
         {
-            entry = data[def_keys[i]];
-            if(entry["itemType"] != 3){ continue; }
-            string_key = def_keys[i].toString();
+            let def_key = def_keys[i];
+            if(def_key){
+                entry = data[def_key];
+                if(entry["itemType"] != 3){ continue; }
+                string_key = def_key.toString();
 
-            if(!(string_key in this.weapon_directory) || this.weapon_directory[string_key] == false) {
-                this.weapon_directory[string_key] = new destiny_weapon(string_key); //this.parseGunData(entry);
+                if(!(string_key in this.weapon_directory) || this.weapon_directory[string_key] == false) {
+                    this.weapon_directory[string_key] = new destiny_weapon(string_key); //this.parseGunData(entry);
+                }
+                //let gun = this.weapon_directory[string_key];
             }
-            //let gun = this.weapon_directory[string_key];
         }
         return;
     };
-    static async getWeaponHashes(session_id, data) {
+    static async getWeaponHashes(session_id : string, data : any) {
         let player = this.player_directory[session_id];
         let open_inventory = [];
 
@@ -199,24 +223,28 @@ class destiny_data {
             let string_key = key.toString();
             if(!(string_key in this.weapon_directory)){ this.weapon_directory[string_key] = false; }
 
-            entry = false;
+            entry = undefined;
             if("itemInstanceId" in open_inventory[i]) { 
                 //entry = open_inventory[i]["itemInstanceId"]; 
                 entry = new destiny_weapon(string_key,open_inventory[i]["itemInstanceId"]);
             }
-            player[chara_id][entry.hash_unique] = entry;
+            if(entry){
+                player[chara_id][entry.hash_unique] = entry;
+            }
         }
         //this will finish executing on it's own time
         this.defineWeapons(open_inventory);
         //writeToFile("weapon_directory", this.weapon_directory);
         return;
     };
-    static async defineWeapons(data) {
+    static async defineWeapons(data : Array<destiny_weapon>) {
         //Don't await this function. use parseGunData for immediate results
         for(let i = 0; i < data.length; i++)
         {
-            let key = data[i]["itemHash"];
-            if(!(key in this.weapon_directory) || this.weapon_directory[key] == false){ this.weapon_directory[key] = new destiny_weapon(key); }
+            let weapon = data[i];           if(!weapon){ continue; }
+            let key = weapon.item_hash;     if(!key){ continue; }
+            if(!(key in this.weapon_directory) || this.weapon_directory[key] == false){ 
+                this.weapon_directory[key] = new destiny_weapon(key); }
             let gun = this.weapon_directory[key];
             
             switch(gun.stage) {
@@ -230,13 +258,13 @@ class destiny_data {
     }
     //parse-data functions
     
-    static parseGunData(item_data) {
-        if(!(item_data) || !("hash" in item_data)){ return; } // can't be saved ATM without a hash
+    static parseGunData(item_data : any) {
+        if(!(item_data) || !("hash" in item_data)){ return {}; } // can't be saved ATM without a hash
 
         let itemHash = item_data["hash"];
         let itemName = false;
         let itemIcon = false;
-        let itemDesc = false;
+        let itemDesc :string | boolean = false;
         let itemType = false;
         let itemTypeDesc = false;
         let itemLore = false;
@@ -250,10 +278,8 @@ class destiny_data {
             itemScreenshot = item_data["screenshot"];
 
             itemDesc = item_data["displayProperties"]["description"];
-            if(itemDesc != ""){
-                itemDesc = item_data["displayProperties"]["description"];
-            }
-            else{   //then i think it's a gun
+            if(!(typeof itemDesc === 'boolean') && itemDesc != ""){
+                //then i think it's a gun
                 itemDesc = item_data["flavorText"];
             }
         }
@@ -262,17 +288,17 @@ class destiny_data {
         }
         return {"name":itemName,"icon":itemIcon,"description":itemDesc,"itemTypeDesc":itemTypeDesc,"itemType":itemType,"lore":itemLore,"screenshot":itemScreenshot,"hash":itemHash};
     };
-    static parseSocketData(item_data){
-        let itemHash = false;
+    static parseSocketData(item_data : any){
+        let itemHash : string | false = false;
         //let itemType = false;
-        let itemSubType = false;
-        let itemName = false;
-        let itemDesc = false;
-        let itemIcon = false;
-        let smallIcon = false;
-        let itemTypeDesc = false;
+        let itemSubType : string | false = false;
+        let itemName : string | false = false;
+        let itemDesc : string | false = false;
+        let itemIcon : string | false = false;
+        let smallIcon : string | false = false;
+        let itemTypeDesc : string | false = false;
         //let itemCategories = false;
-        let itemCategory = false;
+        let itemCategory : string | false = false;
 
         itemHash = item_data["hash"];
         // itemType is always 19
@@ -296,22 +322,25 @@ class destiny_data {
     };
 
 
-    static async saveSocketDefinitions(data) {
+    static async saveSocketDefinitions(data : any) {
         let def_keys = Object.keys(data);
         let entry, string_key;
         for(let i =0; i < def_keys.length; i++)
         {
-            entry = data[def_keys[i]];
-            string_key = def_keys[i].toString();
-            if(!(string_key in this.socket_definitions))
-            {
-                this.socket_definitions[string_key] = entry;
+            let def_key = def_keys[i];
+            if(def_key){
+                entry = data[def_key];
+                string_key = def_key.toString();
+                if(!(string_key in this.socket_definitions))
+                {
+                    this.socket_definitions[string_key] = entry;
+                }
             }
         }
         return;
     };
 
-    static async saveResults(data) {
+    static async saveResults(data : any) {
         let item_data = data.Response;
         let gun_data = this.parseGunData(item_data);
         let itemHash = gun_data["hash"];
@@ -319,14 +348,14 @@ class destiny_data {
         this.weapon_directory[itemHash] = gun_data;
         //this.printSockets(item_data);
     }
-    static async printResults(data) {
+    static async printResults(data : any) {
         let item_data = data.Response;
         if(!item_data){ console.log("Undefined item_data."); return; }
 
         //this.saveResults(data);
         await this.writeToFile("test_output", item_data);
     };
-    static async printSockets(item_data) {
+    static async printSockets(item_data : any) {
         let type_hash;
         let instance_hash;
         let plug_hash;
@@ -346,30 +375,32 @@ class destiny_data {
                         if(!(item_data["hash"] in this.weapon_to_socket)){ this.weapon_to_socket[item_data["hash"]] = new Set(); }
                         this.weapon_to_socket[item_data["hash"]].add(plug_hash);
                         
-                        r_url = "https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/" + plug_hash + "/";
-                        await create(r_url, {
+                        let r_url = "https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/" + plug_hash + "/";
+                        /*await create(r_url, {
                             //"components":"300"
                         },
                             saveSocket, "GET"
-                        );
+                        );*/
                     }
 
                 }
             }
         }
     }
-    static async saveSocket(data) {
+    static async saveSocket(data : any) {
         let item_data = data.Response;
         if(!item_data){ return; }
         
-        let socket_data = parseSocketData(item_data);
+        let socket_data = destiny_data.parseSocketData(item_data);
         let itemHash = socket_data["hash"];
-        this.socket_directory[itemHash] = socket_data;
-        await unpackSocket(this.categorised_sockets, itemHash, item_data);
+        if(!(typeof itemHash === 'boolean')){
+            this.socket_directory[itemHash] = socket_data;
+            await destiny_data.unpackSocket(this.categorised_sockets, itemHash, item_data);
+        }
         return;
     }
 
-    static getSocket(socket_hash) {
+    static getSocket(socket_hash : any) {
         if(socket_hash in this.socket_directory){ return this.socket_directory[socket_hash]; }
         // else
         let socket = this.item_definitions[socket_hash];
@@ -382,44 +413,81 @@ class destiny_data {
     }
 }
 
-class destiny_weapon {
+export class destiny_weapon {
     static UNIQUE_ID = 1;
-    constructor(item_hash,instance_hash=false) {
+    // stage 1
+    item_hash? : string;
+    hash_unique : number;
+    stage : number;
+    instance_hash? : string;
+    //
+    wp_data? : weapon_data;
+    sockets? : weapon_sockets;
+    unique? : weapon_unique;
+
+    constructor(item_hash? : string, instance_hash? : string) {
         //stage 1
-        if(item_hash == false){ return; }   //to get the object without incrementing UNIQUE_ID
-        this.hash_unique = destiny_weapon.UNIQUE_ID; ++destiny_weapon.UNIQUE_ID;
+        this.hash_unique = -1; 
         this.stage = 1;
-        this.item_hash = item_hash;
-        this.instance_hash = instance_hash;
+        if(instance_hash){ this.instance_hash = instance_hash; }
+        if(item_hash){  //=null to get the object without incrementing UNIQUE_ID
+            this.item_hash = item_hash;
+            this.hash_unique = destiny_weapon.UNIQUE_ID; ++destiny_weapon.UNIQUE_ID;
+        }
     }
     //used to load from file
-    static clone(old_gun){
-        var new_gun = new destiny_weapon(false);
-        let attributes = Object.keys(other_object);
-        for(key in attributes){
-            new_gun[key] = old_gun[key];
-        }
+    static clone(old_gun : GunFile){
+        var new_gun = new destiny_weapon();
+        new_gun.item_hash = old_gun.item_hash;
+        new_gun.hash_unique = old_gun.hash_unique;
+        new_gun.stage = old_gun.stage;
+        new_gun.instance_hash = old_gun.instance_hash;
+        //
+        new_gun.wp_data = old_gun.wp_data;
+        new_gun.sockets = old_gun.sockets;
+        new_gun.unique = old_gun.unique;
         if(new_gun.hash_unique > destiny_weapon.UNIQUE_ID){ ++destiny_weapon.UNIQUE_ID; }
+        return new_gun;
     }
-    //increases stage to 2
-    parseGunData() {
-        if(!(this.item_hash)){ return; } // can't be saved ATM without a hash
-        let item_data = destiny_data.item_definitions[this.item_hash];
 
-        this.name = false;
-        this.icon = false;
-        this.small_icon = false;
-        this.description = false;
-        this.itemType = false;
-        this.itemTypeDesc = false;
-        this.lore = false;
-        this.screenshot = false;
+    parseGunData(){
+        var new_data = new weapon_data(this);
+        // Give it to the destiny_weapon
+        this.wp_data = new_data;
+    }
+    parseGunSockets(){
+        var new_sockets = new weapon_sockets(this);
+        this.sockets = new_sockets;
+    }
+    parseGunUnique(weapon_perks : any){
+        var new_unique = new weapon_unique(this,weapon_perks);
+        this.unique = new_unique;
+    }
+}
+
+class weapon_data {
+    // stage 2
+    name? : string;
+    icon? : string;
+    small_icon? : string;
+    description? : string;
+    itemType? : string;
+    itemTypeDesc? : string;
+    lore? : string;
+    screenshot? : string;
+    // stage 3
+    perk_pool? : any;
+
+    //increases stage to 2
+    constructor(parent : destiny_weapon) {
+        if(!(parent.item_hash)){ return; } // can't be saved ATM without a hash
+        let item_data = destiny_data.item_definitions[parent.item_hash];
+
         try{
             this.name = item_data["displayProperties"]["name"];
             this.icon = item_data["displayProperties"]["icon"];
             if("iconSequences" in item_data["displayProperties"] && item_data["displayProperties"]["iconSequences"].length > 1) {
-                try{ this.small_icon = item_data["displayProperties"]["iconSequences"][1]["frames"][0]; }  //the 2nd one is smaller
-                catch{ this.small_icon = false; }
+                this.small_icon = item_data["displayProperties"]["iconSequences"][1]["frames"][0];  //the 2nd one is smaller
             }
             this.itemType = item_data["itemType"];
             this.itemTypeDesc = item_data["itemTypeDisplayName"];
@@ -430,31 +498,34 @@ class destiny_weapon {
             if(this.description == ""){
                 this.description = item_data["flavorText"];
             }
-            if(this.stage == 1){ this.stage = 2; }  // stage = 2
+            if(parent.stage == 1){ parent.stage = 2; }  // stage = 2
 
-            destiny_data.shelfWeapon(this.item_hash, this); // adds it to categorised weapons
-            return true;
+            destiny_data.shelfWeapon(parent.item_hash, this); // adds it to categorised weapons
         }
         catch (err){
             console.log(`caught weapon reading error. ${err}`);
         }
-        return false;
+        
     }
+}
+class weapon_sockets {
+    perk_pool : {[key:string]:any};
     //increase stage to 3
-    parseGunSockets() {
+    constructor(parent : destiny_weapon) {
         this.perk_pool = {};
-        let perk_pool = {};
+        let perk_pool : {[key:string]:any} = {};
         let sock;
         let perk_hash, perk; let itemCategory;
         
-        if(true || !(this.item_hash in destiny_data.weapon_to_socket)) {
-            let all_sockets = destiny_data.item_definitions[this.item_hash];
-            if( !all_sockets || !("sockets" in all_sockets && "socketEntries" in all_sockets["sockets"])){ return false; }
+        if(!parent.item_hash){ return; }
+        if(true){//|| !(parent.item_hash in destiny_data.weapon_to_socket)) {
+            let all_sockets = destiny_data.item_definitions[parent.item_hash];
+            if( !all_sockets || !("sockets" in all_sockets && "socketEntries" in all_sockets["sockets"])){ return; }
             all_sockets = all_sockets["sockets"]["socketEntries"];
             //destiny_data.writeToFile("test_sockets",all_sockets);
 
-            destiny_data.weapon_to_socket[this.item_hash] = {}; //new Set();
-            perk_pool = destiny_data.weapon_to_socket[this.item_hash];
+            destiny_data.weapon_to_socket[parent.item_hash] = {}; //new Set();
+            perk_pool = destiny_data.weapon_to_socket[parent.item_hash];
             let plug_hash, perk_array;
             let frame_two = false;
             for(let i = 0; i < all_sockets.length; i++) {
@@ -488,18 +559,18 @@ class destiny_weapon {
                 }
 
             }
-            destiny_data.weapon_to_socket[this.item_hash] = perk_pool;
-        } else {
-            perk_pool = destiny_data.weapon_to_socket[this.item_hash];
-        }
+            destiny_data.weapon_to_socket[parent.item_hash] = perk_pool;
+        } /*else {
+            perk_pool = destiny_data.weapon_to_socket[parent.item_hash];
+        } */
         let categoryArray = Object.keys(perk_pool);
         let sock_set;
         for(let i = 0; i < categoryArray.length; i++){
             itemCategory = categoryArray[i];
-            sock_set = perk_pool[itemCategory];
+            sock_set = perk_pool[itemCategory!];
             if(!(sock_set instanceof Set)) {    // convert map to set
                 sock_set = new Set(Object.values(sock_set))
-                perk_pool[itemCategory] = sock_set;
+                perk_pool[itemCategory!] = sock_set;
             }
             if(sock_set) {
                 for(let entry of sock_set.entries()) {
@@ -507,18 +578,23 @@ class destiny_weapon {
                     sock = destiny_data.getSocket(perk_hash);
 
                     if(sock.itemTypeDesc.includes('Enhanced')){ continue; }
-                    if(!(itemCategory in this.perk_pool)){ this.perk_pool[itemCategory] = new Set(); }
-                    this.perk_pool[itemCategory].add(perk_hash);
+                    if(!(itemCategory! in this.perk_pool)){ this.perk_pool[itemCategory!] = new Set(); }
+                    this.perk_pool[itemCategory!].add(perk_hash);
                 } 
             }
 
             
         }
-        if(this.stage == 2){ this.stage = 3 }  // stage = 3
-        return true;
+        if(parent.stage == 2){ parent.stage = 3 }  // stage = 3
     };
+}
+
+class weapon_unique {
     //increase stage to 4
-    parseGunUnique(perk_array) {
+    parent : destiny_weapon;
+    perk_pool : any;
+    constructor(parent : destiny_weapon, perk_array : any) {
+        this.parent = parent;
         this.perk_pool = {};
 
         let perk_hash;
@@ -544,13 +620,14 @@ class destiny_weapon {
                 this.perk_pool[itemCategory].push(perk.hash);
             }
         }
-        this.stage = 4; //stage = 4
+        parent.stage = 4; //stage = 4
     };
 
     // For later
-    compareUniqueGuns(hash_unique) { return false; }
+    // compareUniqueGuns(hash_unique) { return false; }
+
     //Compare 2 guns, rate the comparison
-    compareGuns(item_hash) {
+    compareGuns(item_hash : string) {
         let rating = 0;
         let perk_keys = Object.keys(this.perk_pool);
         let opp_set = destiny_data.weapon_to_socket[item_hash];
@@ -572,36 +649,41 @@ class destiny_weapon {
  
         for(let i in perk_keys) {
             let key = perk_keys[i];
-            let perk_set = new Set();
-            for(let j in this.perk_pool[key]) {
-                let perk = this.perk_pool[key][j];
-                perk_set.add(perk);
+            let perk_set : Set<string> = new Set();
+            if(key && perk_set){
+                for(let j in this.perk_pool[key]) {
+                    let perk = this.perk_pool[key][j];
+                    perk_set.add(perk);
+                }
+                
+                if(!(key in opp_set) || key=='0'){ continue; }
+                rating += ( custom_intersection(perk_set,opp_set[key]).size / perk_set.size);
             }
-            
-            if(!(key in opp_set) || key==0){ continue; }
-            rating += ( custom_intersection(perk_set,opp_set[key]).size / perk_set.size);
         }
         rating /= perk_keys.length; // a fraction of 1, ideally
         return rating;
     }
     //Find similiar guns
     similiarGunSets() {
-        let itemTypeDesc = destiny_data.weapon_directory[this.item_hash].itemTypeDesc;
+        if(!this.parent.item_hash){ return; }
+        let itemTypeDesc = destiny_data.weapon_directory[this.parent.item_hash].itemTypeDesc;
         let super_set = new Set(destiny_data.categorised_guns[itemTypeDesc]);
-        let rating_dict = {};
+        let rating_dict : {[key:string]:number} = {};
         
         for(let entry of super_set.entries()) {
             let item_hash = entry[0];
-            let rating = this.compareGuns(item_hash);
-            if(rating){
-                rating_dict[item_hash] = rating;
+            if(typeof item_hash === 'string'){
+                let rating = this.compareGuns(item_hash);
+                if(rating){
+                    rating_dict[item_hash] = rating;
+                }
             }
         }
         return rating_dict;
     }
 }
 
-function custom_intersection(set_one, set_two) {
+function custom_intersection(set_one : Set<string>, set_two : Set<string>) {
     let set_three = new Set();
     for(let entry of set_one.entries()) {
         let val = entry[0];
@@ -616,8 +698,8 @@ if(destiny_data.render_filepath){
     folder_path = path.resolve(destiny_data.render_filepath, "static_data");
 }
 if (!fs.existsSync(folder_path)) {
-    fs.mkdirSync(folder_path, true); // recursive = true
+    fs.mkdirSync(folder_path, {recursive : true}); // recursive = true
 }
 //destiny_data.loadAllFiles();
 
-module.exports = destiny_data;
+//module.exports = destiny_data;

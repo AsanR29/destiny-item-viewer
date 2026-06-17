@@ -1,11 +1,11 @@
 // only trigger on the server's commandline
 
-const DD = require("../scripts/destiny_data");
-const DestinySQL = require("./destiny_sql");
-const DestinyRequest = require("../scripts/destiny_request");
+import {destiny_data as DD} from "../scripts/destiny_data.js";
+import {DestinySQL} from "./destiny_sql.js";
+import {DestinyRequest} from "../scripts/destiny_request.js";
 
-class destiny_commands {
-    static destiny_show = async function(target, id){
+export class destiny_commands {
+    static destiny_show = async function(target : string, id : string){
         console.log(`Show ${target} ${id}\n`);
         id = String(id);
         try {
@@ -32,7 +32,7 @@ class destiny_commands {
         catch{ console.log(`Doesn't contain id ${id}.`); }
         return;
     }
-    static destiny_manifest = async function(type, id){
+    static destiny_manifest = async function(type : string, id : string){
         console.log(`Manifest ${type} ${id}`);
         try {
             switch(type){
@@ -44,11 +44,11 @@ class destiny_commands {
         catch{ console.log(`Error trying to Manifest.`); }
         return;
     };
-    static destiny_read = async function(type, id){
+    static destiny_read = async function(type : string, id : string){
         console.log(`Read ${type} ${id}`);
         return;
     };
-    static destiny_save = async function(type, id){
+    static destiny_save = async function(type : string, id : string){
         console.log(`Save ${type} ${id}`);
         try{
             switch(type)
@@ -84,7 +84,7 @@ class destiny_commands {
         catch(err){ console.log(err); }
         return;
     };
-    static destiny_drop = async function(type, id){
+    static destiny_drop = async function(type : string, id : string){
         console.log(`Drop ${type} ${id}\n`);
         try {
             switch (type)
@@ -102,7 +102,7 @@ class destiny_commands {
         catch{ console.log(`Doesn't contain id ${id}.`); }
         return;
     };
-    static destiny_create = async function(type, id){
+    static destiny_create = async function(type : string, id : string){
         console.log(`Create ${type} ${id}`);
         try {
             switch(type) {
@@ -116,4 +116,4 @@ class destiny_commands {
     }
 };
 
-module.exports = destiny_commands;
+//module.exports = destiny_commands;

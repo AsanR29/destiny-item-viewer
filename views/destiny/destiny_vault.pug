@@ -4,6 +4,9 @@ block content
     include ../../src/destiny_header.pug
     include ../../src/svg_mixins.pug
     body(class="bg-green-900 h-full w-full")
+    p #{Object.values(Object.values(gun_lookup)[0])}
+    p #{Object.keys(Object.values(gun_lookup)[0])}
+        //-p #{Object.keys(Object.values(Object.values(gun_lookup)[0])[4])}
         div(class="h-full w-full" style="position:absolute; overflow: visible; z-index:-1;")
             div(id="bg0" class="bg-green-900 h-full w-full" style="position:absolute; z-index:0;")
             div(id="bg1" class="bg-green-900 h-full w-full" style="position:absolute; z-index:1;")
@@ -24,7 +27,7 @@ block content
                     circle(cx="100" cy="100" r="99.8" fill="#9999dd")
                     circle(cx="100" cy="100" r="100" fill="url(#trianglePattern)")
                 //- +DiamondWallpaper(25,-5)
-                +ShitLine(5,1000,9000)
+                //-+ShitLine(5,1000,9000)
 
             div(id="bg2" class="bg-transparent max-w-7xl mx-24 px-2 py-4 sm:px-4 lg:px-6" style="position:absolute; z-index:2;")
                 div(class="bg-blue-910 h-40 w-80")
@@ -65,21 +68,26 @@ mixin gunCard(unique,counter)
     //- var size_height = "h-32";
     -   const sizeClasses = { height: "h-14", width: "w-14", };
     -   let gun = gun_lookup[unique.item_hash];
+    div
+        //-p #{Object.keys(gun)}
+        //-p #{Object.values(gun)}
+        p #{unique.wp_data}
+        br
     div(id="gun_"+counter, onmouseenter="ShowHover(this)", class="flex group-hover:hidden items-center border-blue-700 border-2 bg-white shadow-lg overflow-hidden" style="width:fit-content;")
         a(href=DESTINYPREFIX+`gun/${unique.hash_unique}`)
-            img(class=sizeClasses.height + " " + sizeClasses.width + " flex-shrink-0 object-cover object-center", src="https://bungie.net"+gun.icon, alt="gun's icon here")
+            img(class=sizeClasses.height + " " + sizeClasses.width + " flex-shrink-0 object-cover object-center", src="https://bungie.net"+gun.wp_data.icon, alt="gun's icon here")
 
 mixin hoverCard(unique,counter)
     -   const sizeClasses = { height: "h-14", width: "w-14", };
     -   let gun = gun_lookup[unique.item_hash];
     div(id="hover_"+counter, onmouseleave="HideHover(this)", class="hidden items-center border-blue-700 border-2 bg-slate-400 shadow-lg max-w-full max-h-full" style="width:fit-content; position:absolute;")
         a(href=DESTINYPREFIX+`gun/${unique.hash_unique}`)
-            img(class=sizeClasses.height + " " + sizeClasses.width + " flex-shrink-0 object-cover object-center", src="https://bungie.net"+gun.icon, alt="gun's icon here")
+            img(class=sizeClasses.height + " " + sizeClasses.width + " flex-shrink-0 object-cover object-center", src="https://bungie.net"+gun.wp_data.icon, alt="gun's icon here")
         div(class="px-2 py-1 overflow-visible" style="width:0 height:0")
-            h3(class="text-sm font-semibold text-gray-800") #{gun.name}
-            p(class="text-gray-600") #{gun.description}
+            h3(class="text-sm font-semibold text-gray-800") #{gun.wp_data.name}
+            p(class="text-gray-600") #{gun.wp_data.description}
             div(class="mt-1")
-                a(href=DESTINYPREFIX+"vault/"+gun.itemType, class="text-indigo-600 hover:text-indigo-500 font-semibold text-sm") #{gun.itemTypeDesc}
-                label(class="ml-5 text-indigo-600 font-semibold text-sim") #{gun.itemType}
+                a(href=DESTINYPREFIX+"vault/"+gun.wp_data.itemType, class="text-indigo-600 hover:text-indigo-500 font-semibold text-sm") #{gun.wp_data.itemTypeDesc}
+                label(class="ml-5 text-indigo-600 font-semibold text-sim") #{gun.wp_data.itemType}
 
 

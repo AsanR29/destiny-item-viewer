@@ -7,3 +7,5 @@ package-lock.json
 package-lock.json
 public/built/homestyle.css
 setup_order.md
+/dist
+app.js
